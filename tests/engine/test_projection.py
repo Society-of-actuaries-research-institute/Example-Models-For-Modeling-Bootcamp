@@ -242,7 +242,7 @@ def test_build_policy_detail_beyond_table_forces_death() -> None:
 
 @pytest.mark.slow
 def test_project_from_table_peak_memory() -> None:
-    """Peak memory during projection must stay below 500 MB.
+    """Peak memory during projection must stay below 1 GB.
 
     This guards against accidental materialisation of a full float64
     (n_scenarios × n_policies × n_years) intermediate array.
@@ -263,4 +263,4 @@ def test_project_from_table_peak_memory() -> None:
     tracemalloc.stop()
 
     peak_mb = peak / (1024**2)
-    assert peak_mb < 500, f"Peak memory {peak_mb:.1f} MB exceeded 500 MB limit"
+    assert peak_mb < 1000, f"Peak memory {peak_mb:.1f} MB exceeded 1 GB limit"

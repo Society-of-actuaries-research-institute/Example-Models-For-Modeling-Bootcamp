@@ -189,17 +189,37 @@ class ProjectionEngine:
         Returns:
             scenario_cash_flows: float64, shape (n_scenarios, n_years).
         """
+        n_policies = len(policies)
+        n_scenarios, n_years = random_matrix.shape[0], cum_survival.shape[1]
         benefits = np.array([p.annual_benefit for p in policies], dtype=np.float64)
-        cum_death = 1.0 - cum_survival  # (n_policies, n_years)
 
-        # survive_flag[s, p, y] = 1 iff random[s,p] > cum_death[p,y]
-        # Broadcast: random_matrix[:, :, None] vs cum_death[None, :, :]
-        survive_flag = (
-            random_matrix[:, :, np.newaxis] > cum_death[np.newaxis, :, :]
-        ).astype(
-            np.float64
-        )  # (n_scenarios, n_policies, n_years)
-
-        # Aggregate benefits: avoid (n_s × n_p × n_y) float64 intermediate copy
-        # by using einsum which fuses multiply + sum into one pass.
-        return np.einsum("spT,p->sT", survive_flag, benefits)
+        # Process in policy batches to cap peak memory.
+        # Two key choices keep peak well under 1 GB at 100k policies × 1k scenarios:
+        #
+        # 1. .copy() the column slice — random_matrix[:, p_start:p_end] is a
+        #    highly-strided view (row stride = n_policies × 8 bytes).  Without the
+        #    copy, numpy's ufunc materialises a full float64 broadcast of shape
+        #    (n_scenarios, n_years, p_batch) as a contiguous temp, doubling peak.
+        #
+        # 2. cd_slice computed per batch instead of precomputing the full
+        #    cum_death array (100k × 250 × 8 = 200 MB saved).
+        #
+        # survive is built in (n_scenarios, n_years, p_batch) order so its
+        # trailing axis aligns with benefits for a direct BLAS @ — no transpose.
+        # At p_batch=100, n_scenarios=1_000, n_years=250:
+        #   random_slice  = 1 000 × 100 × 8      =  0.8 MB
+        #   cd_slice      =   100 × 250 × 8      =  0.2 MB
+        #   float64 survive = 1 000 × 250 × 100 × 8 = 200 MB
+        #   peak ≈ 225 MB
+        _BATCH = 100
+        output = np.zeros((n_scenarios, n_years), dtype=np.float64)
+        for p_start in range(0, n_policies, _BATCH):
+            p_end = min(p_start + _BATCH, n_policies)
+            random_slice = random_matrix[:, p_start:p_end].copy()  # (n_scenarios, p_batch)
+            cd_slice = 1.0 - cum_survival[p_start:p_end, :]  # (p_batch, n_years)
+            survive = (
+                random_slice[:, np.newaxis, :]
+                > cd_slice.T[np.newaxis, :, :]
+            ).astype(np.float64)  # (n_scenarios, n_years, p_batch)
+            output += survive @ benefits[p_start:p_end]  # (n_scenarios, n_years)
+        return output
