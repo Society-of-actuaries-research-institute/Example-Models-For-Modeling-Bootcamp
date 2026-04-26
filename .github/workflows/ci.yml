@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Black — format check
+        run: black --check src/ tests/
+
+      - name: Pylint — lint (min score 9.0)
+        run: pylint src/ --fail-under=9.0
+
+      - name: Mypy — strict type check
+        run: mypy src/
+
+      - name: Pytest — unit + integration (excluding slow scale tests)
+        run: pytest tests/ -m "not slow" --cov=mbc_model --cov-fail-under=90
+
+  docs:
+    runs-on: ubuntu-latest
+    # Docs build is a warning, not a gate — malformed docstrings won't block PRs.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Build docs
+        run: mkdocs build --strict

@@ -4,7 +4,7 @@
 # To run this script you will need:
 #  - installation of Python 3.10 or higher (download from https://www.python.org/downloads/)
 #  - installation of the matplotlib library for plotting
-#       Open Command Prompt and run: pip install matplotlib
+#       Open Command Prompt and run: python -m pip install -U matplotlib
 
 #  Once Python and matplotlib are installed, you can run this script from command prompt, vs code, or any other Python IDE.
 

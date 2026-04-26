@@ -1,9 +1,54 @@
 [build-system]
 requires = ["setuptools>=68"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "mbc-production-model-example"
+name = "mbc-production-model"
 version = "0.1.0"
-requires-python = ">=3.10"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "openpyxl>=3.1",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "mypy>=1.7",
+    "black>=23.11",
+    "pylint>=3.0",
+    "types-openpyxl>=3.1.0",
+    "pandas-stubs>=2.1",
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.4",
+    "mkdocstrings[python]>=0.24",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+files = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=mbc_model --cov-report=term-missing"
+markers = [
+    "slow: full 100k x 10k scale run; deselect with -m 'not slow'",
+]
+
+[tool.coverage.run]
+source = ["src/mbc_model"]
+omit = ["*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 90

@@ -1,0 +1,27 @@
+[MASTER]
+py-version = 3.11
+
+[MESSAGES CONTROL]
+# Disabled for pedagogical clarity; substantive quality checks remain active.
+disable =
+    missing-module-docstring,
+    too-few-public-methods,
+    fixme,
+    duplicate-code,
+
+[DESIGN]
+max-args = 8
+max-locals = 20
+max-attributes = 12
+
+[FORMAT]
+max-line-length = 100
+indent-string = '    '
+
+[BASIC]
+# Single-letter names accepted in math-heavy engine code.
+good-names = i,j,k,n,t,p,s,B,T,f,px,qx,pv,df
+
+[SIMILARITIES]
+min-similarity-lines = 6
+ignore-imports = yes
