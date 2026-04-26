@@ -146,6 +146,9 @@ class ModelResults:
         cum_survival: Cumulative survival matrix, shape (n_policies, n_years).
         scenario_cash_flows: Total cash flows per scenario per year,
             shape (n_scenarios, n_years).
+        scenario_policy_cash_flows: Per-policy cash flows for the single scenario
+            selected in ReportingConfig.scenario_id, shape (n_policies, n_years).
+            None when Scenario Results was not requested.
         pv_by_scenario: Present value per scenario, shape (n_scenarios,).
             None when Dashboard Results was not requested.
         policy_detail: Per-year detail for one policy+scenario pair, or None.
@@ -158,6 +161,7 @@ class ModelResults:
     projection_years: np.ndarray
     cum_survival: np.ndarray
     scenario_cash_flows: np.ndarray
+    scenario_policy_cash_flows: np.ndarray | None
     pv_by_scenario: np.ndarray | None
     policy_detail: PolicyDetail | None
     runtime_seconds: float

@@ -82,6 +82,24 @@ def run(
             config.discount_rate,
         )
 
+    scenario_policy_cash_flows: np.ndarray | None = None
+    if config.create_scenario_results:
+        s_idx = config.scenario_id - 1  # 0-based
+        if random_table is not None:
+            random_vec = random_table[s_idx, :]  # (n_policies,)
+        else:
+            random_vec = np.array(
+                [
+                    float(np.random.default_rng(params.random_seed + p).random(s_idx + 1)[-1])
+                    for p in range(len(policies))
+                ],
+                dtype=np.float64,
+            )
+        cum_death = 1.0 - cum_survival  # (n_policies, n_years)
+        survive = random_vec[:, np.newaxis] > cum_death  # (n_policies, n_years)
+        benefits = np.array([p.annual_benefit for p in policies], dtype=np.float64)
+        scenario_policy_cash_flows = survive.astype(np.float64) * benefits[:, np.newaxis]
+
     policy_detail = None
     if config.create_policy_results:
         p_idx = config.policy_id - 1  # 0-based
@@ -107,6 +125,7 @@ def run(
         projection_years=projection_years,
         cum_survival=cum_survival,
         scenario_cash_flows=scenario_cash_flows,
+        scenario_policy_cash_flows=scenario_policy_cash_flows,
         pv_by_scenario=pv_by_scenario,
         policy_detail=policy_detail,
         runtime_seconds=runtime,

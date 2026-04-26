@@ -74,11 +74,15 @@ def _make_results(
         discount_rate=0.04,
         create_dashboard_graph=create_dashboard_graph,
     )
+    scenario_policy_cfs = (
+        np.full((n_policies, n_years), 250.0, dtype=np.float64) if create_scenario else None
+    )
     return ModelResults(
         policies=[_policy(1, 1951, "M"), _policy(2, 1950, "F")],
         projection_years=years,
         cum_survival=cum_survival,
         scenario_cash_flows=scenario_cfs,
+        scenario_policy_cash_flows=scenario_policy_cfs,
         pv_by_scenario=pv if create_dashboard else None,
         policy_detail=detail,
         runtime_seconds=0.5,
@@ -92,22 +96,22 @@ def _make_results(
 
 
 def test_write_creates_file(tmp_path: Path) -> None:
-    out = ReportWriter(tmp_path).write(_make_results())
+    out = ReportWriter(tmp_path).write(_make_results(create_total=True))
     assert out.exists()
     assert out.suffix == ".xlsx"
 
 
 def test_write_creates_output_dir_if_missing(tmp_path: Path) -> None:
     out_dir = tmp_path / "subdir" / "nested"
-    out = ReportWriter(out_dir).write(_make_results())
+    out = ReportWriter(out_dir).write(_make_results(create_total=True))
     assert out.exists()
 
 
-def test_run_summary_always_written(tmp_path: Path) -> None:
-    """Run Summary sheet is always present so the workbook is never empty."""
-    out = ReportWriter(tmp_path).write(_make_results())
+def test_no_run_summary_sheet(tmp_path: Path) -> None:
+    """Run Summary tab must not appear in the output workbook."""
+    out = ReportWriter(tmp_path).write(_make_results(create_total=True))
     wb = openpyxl.load_workbook(out)
-    assert "Run Summary" in wb.sheetnames
+    assert "Run Summary" not in wb.sheetnames
 
 
 # ---------------------------------------------------------------------------
@@ -220,12 +224,13 @@ def test_dashboard_graph_no_error(tmp_path: Path) -> None:
 
 def test_dashboard_skipped_when_pv_none(tmp_path: Path) -> None:
     """If create_dashboard_results=True but pv_by_scenario is None, sheet is skipped."""
-    results = _make_results(create_dashboard=True)
+    results = _make_results(create_dashboard=True, create_total=True)
     results = ModelResults(
         policies=results.policies,
         projection_years=results.projection_years,
         cum_survival=results.cum_survival,
         scenario_cash_flows=results.scenario_cash_flows,
+        scenario_policy_cash_flows=results.scenario_policy_cash_flows,
         pv_by_scenario=None,  # override to None
         policy_detail=results.policy_detail,
         runtime_seconds=results.runtime_seconds,

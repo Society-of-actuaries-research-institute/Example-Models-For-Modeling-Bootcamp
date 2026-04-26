@@ -62,9 +62,6 @@ class ReportWriter:
         wb.remove(wb.active)  # type: ignore[arg-type]  # remove the default blank sheet
 
         cfg = results.config
-        # Summary is always written so the workbook is never empty.
-        self._write_run_summary(wb, results)
-
         if cfg.create_policy_results and results.policy_detail is not None:
             self._write_policy_results(wb, results)
 
@@ -77,26 +74,18 @@ class ReportWriter:
         if cfg.create_dashboard_results:
             self._write_dashboard_results(wb, results)
 
+        if not wb.sheetnames:
+            raise ValueError(
+                "ReportingConfig has no output sheets enabled. "
+                "Set at least one 'Create?' field to 'Yes' in the Reporting sheet."
+            )
+
         wb.save(out_path)
         return out_path.resolve()
 
     # ------------------------------------------------------------------
     # Sheet writers
     # ------------------------------------------------------------------
-
-    def _write_run_summary(self, wb: openpyxl.Workbook, results: ModelResults) -> None:
-        ws = wb.create_sheet("Run Summary")
-        n_scenarios = results.scenario_cash_flows.shape[0]
-        n_policies = len(results.policies)
-        n_years = len(results.projection_years)
-        ws.append(["Parameter", "Value"])
-        ws.append(["Runtime (seconds)", round(results.runtime_seconds, 3)])
-        ws.append(["Policies", n_policies])
-        ws.append(["Scenarios", n_scenarios])
-        ws.append(["Projection Years", n_years])
-        ws.append(["First Year", int(results.projection_years[0])])
-        ws.append(["Last Year", int(results.projection_years[-1])])
-        ws.append(["Discount Rate", results.config.discount_rate])
 
     def _write_policy_results(
         self, wb: openpyxl.Workbook, results: ModelResults
@@ -142,29 +131,27 @@ class ReportWriter:
         scenario_idx = cfg.scenario_id - 1  # 0-based
         policies = results.policies
         years = results.projection_years
-        # Aggregate totals only — per-policy survive_flag is not stored on
-        # ModelResults.  A future extension could add it to the runner output.
+        policy_cfs = results.scenario_policy_cash_flows  # (n_policies, n_years) or None
+        scenario_cf = results.scenario_cash_flows[scenario_idx]  # (n_years,)
 
         ws = wb.create_sheet("Scenario Results")
         policy_headers = [f"Policy_{p.policy_id}" for p in policies]
         ws.append(["Year"] + policy_headers + ["Total"])
 
-        # We can derive per-policy survived benefit from cum_survival only if we
-        # have the random number for this scenario.  The agreed design stores only
-        # the aggregate; emit zeros for individual policy columns and the correct
-        # total.  The integration test validates the total column.
-        scenario_cf = results.scenario_cash_flows[scenario_idx]  # (n_years,)
         for t, year in enumerate(years):
-            per_policy = [""] * len(policies)
+            if policy_cfs is not None:
+                per_policy = [float(policy_cfs[p, t]) for p in range(len(policies))]
+            else:
+                per_policy = [""] * len(policies)
             ws.append([int(year)] + per_policy + [float(scenario_cf[t])])
 
         if cfg.create_scenario_graph:
-            fig = self._make_line_chart(
-                x=years,
-                y_series={"Total Cash Flow": scenario_cf},
-                title=f"Scenario {cfg.scenario_id} Cash Flows",
-                xlabel="Year",
-                ylabel="Cash Flow ($)",
+            fig = self._make_stacked_bar_chart(
+                years=years,
+                policy_cfs=policy_cfs,
+                total_cf=scenario_cf,
+                policies=policies,
+                title=f"Scenario {cfg.scenario_id} Cash Flows by Policy",
             )
             self._embed_chart(ws, fig, anchor="A" + str(len(years) + 3))
 
@@ -210,12 +197,10 @@ class ReportWriter:
         ws.append(["Max PV Cash Flow", max_pv])
 
         if cfg.create_dashboard_graph:
-            fig = self._make_bar_chart(
-                labels=[f"S{s + 1}" for s in range(n_used)],
-                values=pv_subset,
-                title="PV Cash Flow by Scenario",
-                xlabel="Scenario",
-                ylabel="PV ($)",
+            fig = self._make_scenario_lines_chart(
+                years=results.projection_years,
+                scenario_cash_flows=results.scenario_cash_flows[:n_used],
+                n_scenarios=n_used,
             )
             self._embed_chart(ws, fig, anchor="A" + str(ws.max_row + 2))
 
@@ -224,36 +209,48 @@ class ReportWriter:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _make_line_chart(
-        x: np.ndarray,
-        y_series: dict[str, np.ndarray],
+    def _make_stacked_bar_chart(
+        years: np.ndarray,
+        policy_cfs: "np.ndarray | None",
+        total_cf: np.ndarray,
+        policies: "list",
         title: str,
-        xlabel: str,
-        ylabel: str,
     ) -> "plt.Figure":
+        """Stacked bar per policy + black total line, matching plot_scenario_results."""
         fig, ax = plt.subplots(figsize=(10, 5))
-        for label, y in y_series.items():
-            ax.plot(x, y, label=label, marker="o", markersize=3)
+        if policy_cfs is not None:
+            bottom = np.zeros(len(years), dtype=np.float64)
+            for p, policy in enumerate(policies):
+                ax.bar(
+                    years,
+                    policy_cfs[p],
+                    bottom=bottom,
+                    label=f"Policy_{policy.policy_id}",
+                )
+                bottom += policy_cfs[p]
+        ax.plot(years, total_cf, color="black", marker="o", markersize=3,
+                linestyle="--", label="Total")
         ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Cash Flow")
         ax.legend()
         fig.tight_layout()
         return fig
 
     @staticmethod
-    def _make_bar_chart(
-        labels: list[str],
-        values: np.ndarray,
-        title: str,
-        xlabel: str,
-        ylabel: str,
+    def _make_scenario_lines_chart(
+        years: np.ndarray,
+        scenario_cash_flows: np.ndarray,
+        n_scenarios: int,
     ) -> "plt.Figure":
-        fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.3), 5))
-        ax.bar(labels, values)
-        ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        """One line per scenario over projection years, matching plot_cash_flows_by_scenario."""
+        fig, ax = plt.subplots(figsize=(10, 5))
+        for s in range(n_scenarios):
+            ax.plot(years, scenario_cash_flows[s], label=f"Scenario_{s + 1}")
+        ax.set_title("Cash Flow Projection by Scenario")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Cash Flow")
+        ax.legend()
         fig.tight_layout()
         return fig
 

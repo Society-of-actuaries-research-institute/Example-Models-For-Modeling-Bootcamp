@@ -22,21 +22,7 @@ def test_run_produces_output_file(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
-def test_run_output_has_run_summary(tmp_path: Path) -> None:
+def test_run_no_run_summary_sheet(tmp_path: Path) -> None:
     out = run(_FIXTURE, output_dir=tmp_path)
     wb = openpyxl.load_workbook(out)
-    assert "Run Summary" in wb.sheetnames
-
-
-@pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
-def test_run_runtime_recorded(tmp_path: Path) -> None:
-    out = run(_FIXTURE, output_dir=tmp_path)
-    wb = openpyxl.load_workbook(out)
-    ws = wb["Run Summary"]
-    runtime_row = next(
-        (row for row in ws.iter_rows(values_only=True) if row[0] == "Runtime (seconds)"),
-        None,
-    )
-    assert runtime_row is not None
-    assert isinstance(runtime_row[1], float)
-    assert runtime_row[1] > 0
+    assert "Run Summary" not in wb.sheetnames
