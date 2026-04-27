@@ -296,7 +296,7 @@ class ExcelLoader:
             create_total_results=_bool("Total Results", "Create?"),
             create_dashboard_results=_bool("Dashboard Results", "Create?"),
             dashboard_scenarios=_int("Dashboard Results", "Scenarios", default=1),
-            dashboard_contracts=_int("Dashboard Results", "Contracts", default=1),
+            dashboard_policies=_int("Dashboard Results", "Policies", default=1),
             discount_rate=_float_required("Dashboard Results", "Discount Rate"),
             create_dashboard_graph=_bool("Dashboard Results", "Create graph?"),
         )

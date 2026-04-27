@@ -157,6 +157,7 @@ class ProjectionEngine:
         return PolicyDetail(
             policy_id=policy.policy_id,
             scenario_id=scenario_id,
+            random_number=random_number,
             projection_years=projection_years,
             ages=ages,
             base_qx=base_qx,

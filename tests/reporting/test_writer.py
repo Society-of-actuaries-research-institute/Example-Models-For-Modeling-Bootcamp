@@ -48,6 +48,7 @@ def _make_results(
         detail = PolicyDetail(
             policy_id=1,
             scenario_id=1,
+            random_number=0.5,
             projection_years=years.copy(),
             ages=np.array([74, 75, 76, 77, 78], dtype=np.int64),
             base_qx=np.full(5, 0.05),
@@ -70,7 +71,7 @@ def _make_results(
         create_total_results=create_total,
         create_dashboard_results=create_dashboard,
         dashboard_scenarios=n_scenarios,
-        dashboard_contracts=n_policies,
+        dashboard_policies=n_policies,
         discount_rate=0.04,
         create_dashboard_graph=create_dashboard_graph,
     )
@@ -128,15 +129,18 @@ def test_policy_results_sheet_created(tmp_path: Path) -> None:
 def test_policy_results_row_count(tmp_path: Path) -> None:
     out = ReportWriter(tmp_path).write(_make_results(create_policy=True))
     ws = openpyxl.load_workbook(out)["Policy Results"]
-    assert ws.max_row == 6  # 1 header + 5 data rows
+    assert ws.max_row == 10  # 4 info rows + 1 column header + 5 data rows
 
 
 def test_policy_results_header(tmp_path: Path) -> None:
     out = ReportWriter(tmp_path).write(_make_results(create_policy=True))
     ws = openpyxl.load_workbook(out)["Policy Results"]
-    header = [ws.cell(1, c).value for c in range(1, 11)]
+    # Row 1: policy info; row 5: column headers
+    assert ws.cell(1, 1).value == "Policy"
+    assert ws.cell(1, 4).value == "Scenario"
+    header = [ws.cell(5, c).value for c in range(1, 11)]
     assert header[0] == "Year"
-    assert header[-1] == "Cash_Flow"
+    assert header[-1] == "Total Cash Flow"
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +157,7 @@ def test_scenario_results_sheet_created(tmp_path: Path) -> None:
 def test_scenario_results_row_count(tmp_path: Path) -> None:
     out = ReportWriter(tmp_path).write(_make_results(create_scenario=True))
     ws = openpyxl.load_workbook(out)["Scenario Results"]
-    assert ws.max_row == 6  # 1 header + 5 years
+    assert ws.max_row == 8  # 2 info rows + 1 column header + 5 data rows
 
 
 # ---------------------------------------------------------------------------
@@ -170,14 +174,15 @@ def test_total_results_sheet_created(tmp_path: Path) -> None:
 def test_total_results_row_count(tmp_path: Path) -> None:
     out = ReportWriter(tmp_path).write(_make_results(create_total=True))
     ws = openpyxl.load_workbook(out)["Total Results"]
-    assert ws.max_row == 6  # 1 header + 5 years
+    assert ws.max_row == 9  # 3 header rows + 1 column header + 5 data rows
 
 
 def test_total_results_values(tmp_path: Path) -> None:
     out = ReportWriter(tmp_path).write(_make_results(create_total=True))
     ws = openpyxl.load_workbook(out)["Total Results"]
-    assert ws.cell(2, 1).value == 2025  # first year
-    assert ws.cell(2, 2).value == pytest.approx(500.0)  # scenario 1, year 1
+    assert ws.cell(1, 1).value == "Discount Rate"
+    assert ws.cell(5, 1).value == 2025  # first data year
+    assert ws.cell(5, 2).value == pytest.approx(500.0)  # scenario 1, year 1
 
 
 # ---------------------------------------------------------------------------
@@ -194,13 +199,9 @@ def test_dashboard_results_sheet_created(tmp_path: Path) -> None:
 def test_dashboard_results_mean_pv(tmp_path: Path) -> None:
     out = ReportWriter(tmp_path).write(_make_results(create_dashboard=True))
     ws = openpyxl.load_workbook(out)["Dashboard Results"]
-    mean_row = None
-    for row in ws.iter_rows(values_only=True):
-        if row[0] == "Mean PV Cash Flow":
-            mean_row = row
-            break
-    assert mean_row is not None
-    assert mean_row[1] == pytest.approx(900.0)  # mean of [1000, 900, 800]
+    # Row 5: column headers (Mean, Median, ...); row 6: values
+    assert ws.cell(5, 1).value == "Mean"
+    assert ws.cell(6, 1).value == pytest.approx(900.0)  # mean of [1000, 900, 800]
 
 
 # ---------------------------------------------------------------------------

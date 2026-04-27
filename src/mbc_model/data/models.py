@@ -79,7 +79,7 @@ class ReportingConfig:
         create_total_results: Whether to write the Total Results sheet.
         create_dashboard_results: Whether to write the Dashboard Results sheet.
         dashboard_scenarios: Number of scenarios for Dashboard Results.
-        dashboard_contracts: Number of contracts for Dashboard Results.
+        dashboard_policies: Number of policies for Dashboard Results.
         discount_rate: Annual discount rate for PV calculation (e.g. 0.04 = 4%).
         create_dashboard_graph: Whether to embed a chart in Dashboard Results.
     """
@@ -93,7 +93,7 @@ class ReportingConfig:
     create_total_results: bool
     create_dashboard_results: bool
     dashboard_scenarios: int
-    dashboard_contracts: int
+    dashboard_policies: int
     discount_rate: float
     create_dashboard_graph: bool
 
@@ -110,6 +110,7 @@ class PolicyDetail:
     Args:
         policy_id: 1-based policy identifier.
         scenario_id: 1-based scenario identifier.
+        random_number: The single random variate used for the survival test.
         projection_years: Calendar years of projection, shape (n_years,).
         ages: Attained age in each projection year, shape (n_years,).
         base_qx: Base mortality rate by year, shape (n_years,).
@@ -124,6 +125,7 @@ class PolicyDetail:
 
     policy_id: int
     scenario_id: int
+    random_number: float
     projection_years: np.ndarray
     ages: np.ndarray
     base_qx: np.ndarray

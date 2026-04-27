@@ -93,19 +93,25 @@ class ReportWriter:
         detail = results.policy_detail
         assert detail is not None
 
+        policy = next(p for p in results.policies if p.policy_id == detail.policy_id)
+
         ws = wb.create_sheet("Policy Results")
+        ws.append(["Policy", detail.policy_id, None, "Scenario", detail.scenario_id])
+        ws.append(["Gender", policy.gender, None, "Random Number", detail.random_number])
+        ws.append(["Benefit", policy.annual_benefit, None, None, None, None, "Cumulative Probability of"])
+        ws.append([None, None, None, None, None, None, "Survival", "Death", "Survive = 1"])
         ws.append(
             [
                 "Year",
                 "Age",
-                "Base_Qx",
+                "Base Qx",
                 "Improvement",
-                "Improved_Qx",
+                "Improved Qx",
                 "Px",
                 "tPx",
-                "1-tPx",
-                "Survive_1_Dead_0",
-                "Cash_Flow",
+                "1 - tPx",
+                "Dead = 0",
+                "Total Cash Flow",
             ]
         )
         for i, year in enumerate(detail.projection_years):
@@ -135,8 +141,9 @@ class ReportWriter:
         scenario_cf = results.scenario_cash_flows[scenario_idx]  # (n_years,)
 
         ws = wb.create_sheet("Scenario Results")
-        policy_headers = [f"Policy_{p.policy_id}" for p in policies]
-        ws.append(["Year"] + policy_headers + ["Total"])
+        ws.append(["Scenario", cfg.scenario_id])
+        ws.append([None, "Cash Flow Projection by Contract"])
+        ws.append(["Year \\ Contract"] + [p.policy_id for p in policies] + ["Total"])
 
         for t, year in enumerate(years):
             if policy_cfs is not None:
@@ -153,19 +160,29 @@ class ReportWriter:
                 policies=policies,
                 title=f"Scenario {cfg.scenario_id} Cash Flows by Policy",
             )
-            self._embed_chart(ws, fig, anchor="A" + str(len(years) + 3))
+            self._embed_chart(ws, fig, anchor="A" + str(ws.max_row + 2))
 
     def _write_total_results(
         self, wb: openpyxl.Workbook, results: ModelResults
     ) -> None:
         ws = wb.create_sheet("Total Results")
         n_scenarios = results.scenario_cash_flows.shape[0]
-        scenario_headers = [f"Scenario_{s + 1}" for s in range(n_scenarios)]
-        ws.append(["Year"] + scenario_headers)
+        years = results.projection_years
+        discount_rate = results.config.discount_rate
 
-        for t, year in enumerate(results.projection_years):
+        valuation_year = int(years[0]) - 1
+        t_exp = (years - valuation_year).astype(np.float64)
+        discount_factors = 1.0 / (1.0 + discount_rate) ** t_exp
+        pv = results.scenario_cash_flows @ discount_factors
+
+        ws.append(["Discount Rate", discount_rate])
+        ws.append(["PV Cash Flow"] + [float(pv[s]) for s in range(n_scenarios)])
+        ws.append([None, "Total Cash Flow by Scenario"])
+        ws.append(["Year \\ Scen"] + list(range(1, n_scenarios + 1)))
+
+        for t_idx, year in enumerate(years):
             row = [int(year)] + [
-                float(results.scenario_cash_flows[s, t]) for s in range(n_scenarios)
+                float(results.scenario_cash_flows[s, t_idx]) for s in range(n_scenarios)
             ]
             ws.append(row)
 
@@ -178,6 +195,7 @@ class ReportWriter:
             return
 
         n_used = min(cfg.dashboard_scenarios, len(pv))
+        n_policies = min(cfg.dashboard_policies, len(results.policies))
         pv_subset = pv[:n_used]
 
         mean_pv = float(np.mean(pv_subset))
@@ -187,14 +205,12 @@ class ReportWriter:
         max_pv = float(np.max(pv_subset))
 
         ws = wb.create_sheet("Dashboard Results")
-        ws.append(["Metric", "Value"])
-        ws.append(["Runtime (seconds)", results.runtime_seconds])
-        ws.append(["Scenarios used", n_used])
-        ws.append(["Mean PV Cash Flow", mean_pv])
-        ws.append(["Median PV Cash Flow", median_pv])
-        ws.append(["Std Dev PV Cash Flow", std_pv])
-        ws.append(["Min PV Cash Flow", min_pv])
-        ws.append(["Max PV Cash Flow", max_pv])
+        ws.append(["Number of Scenarios", None, n_used])
+        ws.append(["Number of Policies", None, n_policies])
+        ws.append(["Discount rate", None, cfg.discount_rate])
+        ws.append(["PV Cash Flow Statistics"])
+        ws.append(["Mean", "Median", "Std Dev", "Min", "Max", "Runtime"])
+        ws.append([mean_pv, median_pv, std_pv, min_pv, max_pv, results.runtime_seconds])
 
         if cfg.create_dashboard_graph:
             fig = self._make_scenario_lines_chart(
