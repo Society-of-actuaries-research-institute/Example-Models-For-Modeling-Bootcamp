@@ -159,6 +159,9 @@ class ExcelLoader:
                 elif col_a == "Last Projection Year":
                     scalars["last_projection_year"] = int(col_c)  # type: ignore[arg-type]
                     state = idle
+                elif col_a == "Which Random Numbers?":
+                    scalars["which_random_numbers"] = str(col_c).strip() if col_c is not None else "Seed"
+                    state = idle
                 elif col_a == "Random Numbers Seed":
                     scalars["random_seed"] = int(col_c)  # type: ignore[arg-type]
                     state = idle
@@ -223,9 +226,18 @@ class ExcelLoader:
             male_improvement=np.array([r[0] for r in improvement_rows], dtype=np.float64),
             female_improvement=np.array([r[1] for r in improvement_rows], dtype=np.float64),
         )
-        random_table: np.ndarray | None = (
-            np.array(rng_rows, dtype=np.float64) if rng_rows else None
-        )
+        which_rng = scalars.get("which_random_numbers", "Seed")
+        if which_rng.lower() == "table":
+            random_table: np.ndarray | None = (
+                np.array(rng_rows, dtype=np.float64) if rng_rows else None
+            )
+        elif which_rng.lower() == "seed":
+            random_table = None
+        else:
+            raise ValueError(
+                f"Parameters sheet: 'Which Random Numbers?' must be 'Table' or 'Seed', "
+                f"got {which_rng!r}."
+            )
         return params, mortality_table, random_table
 
     def load_reporting(self) -> ReportingConfig:

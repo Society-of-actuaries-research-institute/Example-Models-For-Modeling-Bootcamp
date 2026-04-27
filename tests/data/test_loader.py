@@ -160,6 +160,19 @@ def test_load_parameters_random_table_first_entry_matches_rnd() -> None:
     assert random_table[0, 0] == pytest.approx(0.208694776842403, rel=1e-6)
 
 
+_SEEDED_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen seeded.xlsm"
+_SKIP_SEEDED = not _SEEDED_FIXTURE.exists()
+_SKIP_SEEDED_REASON = f"Fixture workbook not found: {_SEEDED_FIXTURE}"
+
+
+@pytest.mark.skipif(_SKIP_SEEDED, reason=_SKIP_SEEDED_REASON)
+def test_load_parameters_seed_flag_returns_no_random_table() -> None:
+    """'Which Random Numbers? = Seed' must return random_table=None."""
+    loader = ExcelLoader(_SEEDED_FIXTURE)
+    _, _, random_table = loader.load_parameters()
+    assert random_table is None
+
+
 # ---------------------------------------------------------------------------
 # load_reporting
 # ---------------------------------------------------------------------------

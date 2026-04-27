@@ -34,6 +34,7 @@ class ProjectionEngine:
         policies: list[PolicyRecord],
         cum_survival: np.ndarray,
         random_table: np.ndarray,
+        verbose: bool = False,
     ) -> np.ndarray:
         """Run stochastic projection using a pre-loaded random-number matrix.
 
@@ -43,11 +44,12 @@ class ProjectionEngine:
             random_table: float64, shape (n_scenarios, n_policies).  Entry
                 [s, p] is the single random number drawn for scenario *s* and
                 policy *p*.  Must match the column order of ``policies``.
+            verbose: Print batch-level progress to stdout.
 
         Returns:
             scenario_cash_flows: float64, shape (n_scenarios, n_years).
         """
-        return self._project(policies, cum_survival, random_table)
+        return self._project(policies, cum_survival, random_table, verbose=verbose)
 
     def project_seeded(
         self,
@@ -55,6 +57,7 @@ class ProjectionEngine:
         cum_survival: np.ndarray,
         n_scenarios: int,
         seed: int,
+        verbose: bool = False,
     ) -> np.ndarray:
         """Run stochastic projection, generating random numbers from a seed.
 
@@ -67,6 +70,7 @@ class ProjectionEngine:
             cum_survival: float64, shape (n_policies, n_years).
             n_scenarios: Number of Monte-Carlo scenarios to generate.
             seed: Base seed from ModelParameters.random_seed.
+            verbose: Print batch-level progress to stdout.
 
         Returns:
             scenario_cash_flows: float64, shape (n_scenarios, n_years).
@@ -76,7 +80,7 @@ class ProjectionEngine:
         for p_idx in range(n_policies):
             rng = np.random.default_rng(seed + p_idx)
             random_matrix[:, p_idx] = rng.random(n_scenarios)
-        return self._project(policies, cum_survival, random_matrix)
+        return self._project(policies, cum_survival, random_matrix, verbose=verbose)
 
     def compute_pv(
         self,
@@ -179,6 +183,7 @@ class ProjectionEngine:
         policies: list[PolicyRecord],
         cum_survival: np.ndarray,
         random_matrix: np.ndarray,
+        verbose: bool = False,
     ) -> np.ndarray:
         """Core vectorised projection shared by both public entry points.
 
@@ -186,6 +191,7 @@ class ProjectionEngine:
             policies: Ordered inforce list.
             cum_survival: float64, shape (n_policies, n_years).
             random_matrix: float64, shape (n_scenarios, n_policies).
+            verbose: Print batch-level progress to stdout.
 
         Returns:
             scenario_cash_flows: float64, shape (n_scenarios, n_years).
@@ -214,7 +220,14 @@ class ProjectionEngine:
         #   peak ≈ 225 MB
         _BATCH = 100
         output = np.zeros((n_scenarios, n_years), dtype=np.float64)
-        for p_start in range(0, n_policies, _BATCH):
+        n_batches = (n_policies + _BATCH - 1) // _BATCH
+        last_pct = -1
+        for batch_idx, p_start in enumerate(range(0, n_policies, _BATCH)):
+            if verbose:
+                pct = int(100 * (batch_idx + 1) / n_batches)
+                if pct != last_pct:
+                    print(f"\r  Progress: {pct:3d}%", end="", flush=True)
+                    last_pct = pct
             p_end = min(p_start + _BATCH, n_policies)
             random_slice = random_matrix[:, p_start:p_end].copy()  # (n_scenarios, p_batch)
             cd_slice = 1.0 - cum_survival[p_start:p_end, :]  # (p_batch, n_years)
@@ -223,4 +236,6 @@ class ProjectionEngine:
                 > cd_slice.T[np.newaxis, :, :]
             ).astype(np.float64)  # (n_scenarios, n_years, p_batch)
             output += survive @ benefits[p_start:p_end]  # (n_scenarios, n_years)
+        if verbose:
+            print()  # newline after progress line
         return output
