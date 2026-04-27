@@ -160,7 +160,7 @@ def test_load_parameters_random_table_first_entry_matches_rnd() -> None:
     assert random_table[0, 0] == pytest.approx(0.208694776842403, rel=1e-6)
 
 
-_SEEDED_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen seeded.xlsm"
+_SEEDED_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen seed.xlsm"
 _SKIP_SEEDED = not _SEEDED_FIXTURE.exists()
 _SKIP_SEEDED_REASON = f"Fixture workbook not found: {_SEEDED_FIXTURE}"
 
