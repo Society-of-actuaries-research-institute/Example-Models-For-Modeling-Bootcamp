@@ -50,15 +50,15 @@ def _make_results(
             scenario_id=1,
             random_number=0.5,
             projection_years=years.copy(),
-            ages=np.array([74, 75, 76, 77, 78], dtype=np.int64),
+            attained_ages=np.array([74, 75, 76, 77, 78], dtype=np.int64),
             base_qx=np.full(5, 0.05),
-            improvement=np.full(5, 0.99),
+            improvement_factor=np.full(5, 0.99),
             improved_qx=np.full(5, 0.0495),
             px=np.full(5, 0.9505),
-            cum_survival=np.cumprod(np.full(5, 0.9505)),
-            cum_death=1.0 - np.cumprod(np.full(5, 0.9505)),
-            survive_flag=np.ones(5),
-            annual_cf=np.full(5, 1000.0),
+            cumulative_probability_of_survival_tPx=np.cumprod(np.full(5, 0.9505)),
+            cumulative_probability_of_death_1_minus_tPx=1.0 - np.cumprod(np.full(5, 0.9505)),
+            survive_1_dead_0=np.ones(5),
+            total_cash_flow=np.full(5, 1000.0),
         )
 
     cfg = ReportingConfig(
@@ -81,7 +81,7 @@ def _make_results(
     return ModelResults(
         policies=[_policy(1, 1951, "M"), _policy(2, 1950, "F")],
         projection_years=years,
-        cum_survival=cum_survival,
+        cumulative_survival_matrix=cum_survival,
         scenario_cash_flows=scenario_cfs,
         scenario_policy_cash_flows=scenario_policy_cfs,
         pv_by_scenario=pv if create_dashboard else None,
@@ -229,7 +229,7 @@ def test_dashboard_skipped_when_pv_none(tmp_path: Path) -> None:
     results = ModelResults(
         policies=results.policies,
         projection_years=results.projection_years,
-        cum_survival=results.cum_survival,
+        cumulative_survival_matrix=results.cumulative_survival_matrix,
         scenario_cash_flows=results.scenario_cash_flows,
         scenario_policy_cash_flows=results.scenario_policy_cash_flows,
         pv_by_scenario=None,  # override to None

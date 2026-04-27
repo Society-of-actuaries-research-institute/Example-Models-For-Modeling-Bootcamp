@@ -29,7 +29,7 @@ def _flat_table(n_ages: int, qx: float) -> MortalityTable:
     qx_arr[-1] = 1.0
     imp = np.zeros(n_ages, dtype=np.float64)
     return MortalityTable(
-        male_qx=qx_arr, female_qx=qx_arr, male_improvement=imp, female_improvement=imp
+        male_mortality_rates=qx_arr, female_mortality_rates=qx_arr, male_projection_scale=imp, female_projection_scale=imp
     )
 
 
@@ -97,7 +97,7 @@ def test_project_from_table_threshold_boundary() -> None:
 def test_project_seeded_shape() -> None:
     policies = [_policy(1, 1960, "M")]
     cum_survival = np.full((1, 5), 0.5, dtype=np.float64)
-    result = ENGINE.project_seeded(policies, cum_survival, n_scenarios=10, seed=42)
+    result = ENGINE.project_seeded(policies, cum_survival, number_of_scenarios=10, seed=42)
     assert result.shape == (10, 5)
     assert result.dtype == np.float64
 
@@ -106,16 +106,16 @@ def test_project_seeded_reproducible() -> None:
     """Same seed → identical output."""
     policies = [_policy(i, 1950 + i, "M", float(1000 * i)) for i in range(1, 6)]
     cum_survival = np.random.default_rng(0).random((5, 20))
-    r1 = ENGINE.project_seeded(policies, cum_survival, n_scenarios=15, seed=7)
-    r2 = ENGINE.project_seeded(policies, cum_survival, n_scenarios=15, seed=7)
+    r1 = ENGINE.project_seeded(policies, cum_survival, number_of_scenarios=15, seed=7)
+    r2 = ENGINE.project_seeded(policies, cum_survival, number_of_scenarios=15, seed=7)
     np.testing.assert_array_equal(r1, r2)
 
 
 def test_project_seeded_different_seeds_differ() -> None:
     policies = [_policy(1, 1960, "M")]
     cum_survival = np.full((1, 5), 0.5, dtype=np.float64)
-    r1 = ENGINE.project_seeded(policies, cum_survival, n_scenarios=20, seed=1)
-    r2 = ENGINE.project_seeded(policies, cum_survival, n_scenarios=20, seed=2)
+    r1 = ENGINE.project_seeded(policies, cum_survival, number_of_scenarios=20, seed=1)
+    r2 = ENGINE.project_seeded(policies, cum_survival, number_of_scenarios=20, seed=2)
     assert not np.array_equal(r1, r2), "Different seeds should produce different results"
 
 
@@ -177,15 +177,15 @@ def test_build_policy_detail_shape() -> None:
     detail = ENGINE.build_policy_detail(policy, 1, table, years, random_number=0.0)
     for arr in (
         detail.projection_years,
-        detail.ages,
+        detail.attained_ages,
         detail.base_qx,
-        detail.improvement,
+        detail.improvement_factor,
         detail.improved_qx,
         detail.px,
-        detail.cum_survival,
-        detail.cum_death,
-        detail.survive_flag,
-        detail.annual_cf,
+        detail.cumulative_probability_of_survival_tPx,
+        detail.cumulative_probability_of_death_1_minus_tPx,
+        detail.survive_1_dead_0,
+        detail.total_cash_flow,
     ):
         assert arr.shape == (5,), f"Expected shape (5,), got {arr.shape}"
 
@@ -196,8 +196,8 @@ def test_build_policy_detail_survive_all_zeros() -> None:
     policy = _policy(1, 1975, "M", 500.0)
     years = np.arange(2025, 2028, dtype=np.int64)
     detail = ENGINE.build_policy_detail(policy, 1, table, years, random_number=0.0)
-    np.testing.assert_allclose(detail.survive_flag, 0.0)
-    np.testing.assert_allclose(detail.annual_cf, 0.0)
+    np.testing.assert_allclose(detail.survive_1_dead_0, 0.0)
+    np.testing.assert_allclose(detail.total_cash_flow, 0.0)
 
 
 def test_build_policy_detail_survive_flag_consistent_with_cum_survival() -> None:
@@ -207,8 +207,8 @@ def test_build_policy_detail_survive_flag_consistent_with_cum_survival() -> None
     years = np.arange(2025, 2040, dtype=np.int64)
     rng_val = 0.5
     detail = ENGINE.build_policy_detail(policy, 2, table, years, random_number=rng_val)
-    expected_flags = (rng_val > detail.cum_death).astype(np.float64)
-    np.testing.assert_array_equal(detail.survive_flag, expected_flags)
+    expected_flags = (rng_val > detail.cumulative_probability_of_death_1_minus_tPx).astype(np.float64)
+    np.testing.assert_array_equal(detail.survive_1_dead_0, expected_flags)
 
 
 def test_build_policy_detail_ids_stored() -> None:
@@ -230,9 +230,9 @@ def test_build_policy_detail_beyond_table_forces_death() -> None:
     years = np.array([2025], dtype=np.int64)
     detail = ENGINE.build_policy_detail(policy, 1, table, years, random_number=0.99)
     assert detail.base_qx[0] == pytest.approx(1.0)
-    assert detail.improvement[0] == pytest.approx(1.0)
+    assert detail.improvement_factor[0] == pytest.approx(1.0)
     assert detail.px[0] == pytest.approx(0.0)
-    assert detail.cum_survival[0] == pytest.approx(0.0)
+    assert detail.cumulative_probability_of_survival_tPx[0] == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------

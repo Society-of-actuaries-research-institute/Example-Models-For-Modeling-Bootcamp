@@ -108,26 +108,26 @@ def test_load_parameters_mortality_table_length() -> None:
     """Mortality and improvement arrays must have 122 entries (ages 0-121)."""
     loader = ExcelLoader(_FIXTURE)
     _, table, _ = loader.load_parameters()
-    assert len(table.male_qx) == 122
-    assert len(table.female_qx) == 122
-    assert len(table.male_improvement) == 122
-    assert len(table.female_improvement) == 122
+    assert len(table.male_mortality_rates) == 122
+    assert len(table.female_mortality_rates) == 122
+    assert len(table.male_projection_scale) == 122
+    assert len(table.female_projection_scale) == 122
 
 
 @pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
 def test_load_parameters_terminal_qx_is_one() -> None:
     loader = ExcelLoader(_FIXTURE)
     _, table, _ = loader.load_parameters()
-    assert table.male_qx[-1] == pytest.approx(1.0)
-    assert table.female_qx[-1] == pytest.approx(1.0)
+    assert table.male_mortality_rates[-1] == pytest.approx(1.0)
+    assert table.female_mortality_rates[-1] == pytest.approx(1.0)
 
 
 @pytest.mark.skipif(_SKIP, reason=_SKIP_REASON)
 def test_load_parameters_qx_in_unit_interval() -> None:
     loader = ExcelLoader(_FIXTURE)
     _, table, _ = loader.load_parameters()
-    assert np.all(table.male_qx >= 0) and np.all(table.male_qx <= 1)
-    assert np.all(table.female_qx >= 0) and np.all(table.female_qx <= 1)
+    assert np.all(table.male_mortality_rates >= 0) and np.all(table.male_mortality_rates <= 1)
+    assert np.all(table.female_mortality_rates >= 0) and np.all(table.female_mortality_rates <= 1)
 
 
 # ---------------------------------------------------------------------------

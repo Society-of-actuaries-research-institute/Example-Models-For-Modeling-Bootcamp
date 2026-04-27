@@ -138,10 +138,10 @@ _RANDOM_NUMBERS = np.array([
 # fmt: on
 
 _MORTALITY_TABLE = MortalityTable(
-    male_qx=_MALE_QX,
-    female_qx=_FEMALE_QX,
-    male_improvement=_MALE_IMP,
-    female_improvement=_FEMALE_IMP,
+    male_mortality_rates=_MALE_QX,
+    female_mortality_rates=_FEMALE_QX,
+    male_projection_scale=_MALE_IMP,
+    female_projection_scale=_FEMALE_IMP,
 )
 
 _PARAMS = ModelParameters(
@@ -262,9 +262,9 @@ def test_build_policy_detail_parity() -> None:
     rnd_rows = _rnd_calculate_policy(10, 25)
 
     for t, rnd_row in enumerate(rnd_rows):
-        assert int(detail.survive_flag[t]) == rnd_row["survive"], (
-            f"Year {2025 + t}: survive_flag mismatch"
+        assert int(detail.survive_1_dead_0[t]) == rnd_row["survive"], (
+            f"Year {2025 + t}: survive_1_dead_0 mismatch"
         )
-        assert abs(float(detail.annual_cf[t]) - rnd_row["cf"]) < 0.01, (
+        assert abs(float(detail.total_cash_flow[t]) - rnd_row["cf"]) < 0.01, (
             f"Year {2025 + t}: cash flow mismatch"
         )

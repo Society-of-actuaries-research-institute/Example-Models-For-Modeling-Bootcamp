@@ -40,8 +40,8 @@ def run(
 
     Args:
         input_path: Path to the xlsm input file.
-        output_dir: Directory for the output xlsx file.
-        verbose: Print step-by-step progress to stdout.
+        output_dir: Directory where the output xlsx file is written.
+        verbose: If True, print step-by-step progress and timing to stdout.
 
     Returns:
         Absolute path to the written workbook.
@@ -50,143 +50,227 @@ def run(
     if verbose:
         print("Loading inputs...", flush=True)
 
-    loader = ExcelLoader(input_path)
-    policies = loader.load_inforce()
-    params, mortality_table, random_table = loader.load_parameters()
-    config = loader.load_reporting()
+    # ExcelLoader reads all three sheets: Inforce, Parameters, and Reporting
+    excel_loader: ExcelLoader = ExcelLoader(input_path)
 
-    valuation_year = params.valuation_date.year
-    projection_years = np.arange(
-        valuation_year + 1, params.last_projection_year + 1, dtype=np.int64
+    # Load the list of insured policies from the Inforce sheet
+    inforce_policies = excel_loader.load_inforce()
+
+    # Load scalar parameters, the mortality table, and (optionally) the random
+    # number table from the Parameters sheet.
+    # random_number_table is None when "Which Random Numbers?" = "Seed".
+    model_parameters, mortality_table, random_number_table = (
+        excel_loader.load_parameters()
     )
-    n_scenarios = random_table.shape[0] if random_table is not None else config.dashboard_scenarios
+
+    # Load output settings (which tabs to create, discount rate, etc.)
+    reporting_config = excel_loader.load_reporting()
+
+    # Build the list of calendar years to project: valuation_year+1 to last_projection_year
+    valuation_year: int = model_parameters.valuation_date.year
+    projection_years: np.ndarray = np.arange(
+        valuation_year + 1, model_parameters.last_projection_year + 1, dtype=np.int64
+    )
+
+    # Determine how many scenarios to run before starting the projection:
+    #   - Table mode: the number of rows in the random number table
+    #   - Seed mode: the number specified in the Reporting sheet's "Scenarios" field
+    number_of_scenarios: int = (
+        random_number_table.shape[0]
+        if random_number_table is not None
+        else reporting_config.dashboard_scenarios
+    )
 
     if verbose:
         print(
-            f"  {len(policies):,} policies | {n_scenarios:,} scenarios | "
+            f"  {len(inforce_policies):,} policies | {number_of_scenarios:,} scenarios | "
             f"{len(projection_years)} projection years "
             f"({projection_years[0]}-{projection_years[-1]})"
         )
 
-    # Validate that requested scenario indices fit within the projection
-    if config.create_scenario_results and config.scenario_id > n_scenarios:
+    # Validate that scenario numbers in the Reporting sheet are within range.
+    # Checking early gives a clear error message instead of a cryptic crash later.
+    if (
+        reporting_config.create_scenario_results
+        and reporting_config.scenario_id > number_of_scenarios
+    ):
         raise ValueError(
-            f"Scenario Results 'Scenario' = {config.scenario_id} but only "
-            f"{n_scenarios} scenario(s) will be run. "
+            f"Scenario Results 'Scenario' = {reporting_config.scenario_id} but only "
+            f"{number_of_scenarios} scenario(s) will be run. "
             f"Lower the scenario number in the Reporting sheet."
         )
-    if config.create_policy_results and config.policy_scenario_id > n_scenarios:
+    if (
+        reporting_config.create_policy_results
+        and reporting_config.policy_scenario_id > number_of_scenarios
+    ):
         raise ValueError(
-            f"Policy Results 'Scenario' = {config.policy_scenario_id} but only "
-            f"{n_scenarios} scenario(s) will be run. "
+            f"Policy Results 'Scenario' = {reporting_config.policy_scenario_id} but only "
+            f"{number_of_scenarios} scenario(s) will be run. "
             f"Lower the scenario number in the Reporting sheet."
         )
 
-    mort_engine = MortalityEngine()
-    proj_engine = ProjectionEngine()
+    mortality_engine: MortalityEngine = MortalityEngine()
+    projection_engine: ProjectionEngine = ProjectionEngine()
 
-    t_start = time.perf_counter()
+    # Record overall start time to report total runtime at the end
+    run_start_time: float = time.perf_counter()
 
     # ------------------------------------------------------- cumulative survival
     if verbose:
         print("Computing cumulative survival...", end=" ", flush=True)
-    t_step = time.perf_counter()
-    cum_survival = mort_engine.compute_cum_survival(
-        policies, mortality_table, projection_years, valuation_year
+    step_start_time: float = time.perf_counter()
+
+    # Build the tPx matrix: shape (n_policies, n_years)
+    # Entry [p, t] = probability that policy p is alive at the end of projection year t
+    cumulative_survival_matrix: np.ndarray = mortality_engine.compute_cum_survival(
+        inforce_policies, mortality_table, projection_years, valuation_year
     )
+
     if verbose:
-        print(f"done ({time.perf_counter() - t_step:.1f}s)")
+        print(f"done ({time.perf_counter() - step_start_time:.1f}s)")
 
     # ------------------------------------------------------------ projection
     if verbose:
         print(
             f"Running stochastic projection "
-            f"({len(policies):,} policies x {n_scenarios:,} scenarios)...",
+            f"({len(inforce_policies):,} policies x {number_of_scenarios:,} scenarios)...",
             flush=True,
         )
-    t_step = time.perf_counter()
-    if random_table is not None:
-        scenario_cash_flows = proj_engine.project_from_table(
-            policies, cum_survival, random_table, verbose=verbose
+    step_start_time = time.perf_counter()
+
+    # Run using either the pre-loaded random number table or the seeded generator
+    if random_number_table is not None:
+        scenario_cash_flows: np.ndarray = projection_engine.project_from_table(
+            inforce_policies,
+            cumulative_survival_matrix,
+            random_number_table,
+            verbose=verbose,
         )
     else:
-        scenario_cash_flows = proj_engine.project_seeded(
-            policies, cum_survival, n_scenarios=n_scenarios,
-            seed=params.random_seed, verbose=verbose
+        scenario_cash_flows = projection_engine.project_seeded(
+            inforce_policies,
+            cumulative_survival_matrix,
+            number_of_scenarios=number_of_scenarios,
+            seed=model_parameters.random_seed,
+            verbose=verbose,
         )
+
     if verbose:
-        print(f"  done ({time.perf_counter() - t_step:.1f}s)")
+        print(f"  done ({time.perf_counter() - step_start_time:.1f}s)")
 
     # ------------------------------------------------------- present values
-    pv_by_scenario: np.ndarray | None = None
-    if config.create_dashboard_results:
-        pv_by_scenario = proj_engine.compute_pv(
+    # Compute the present value of cash flows for each scenario (Dashboard Results)
+    present_value_by_scenario: np.ndarray | None = None
+    if reporting_config.create_dashboard_results:
+        present_value_by_scenario = projection_engine.compute_pv(
             scenario_cash_flows,
             projection_years,
             valuation_year,
-            config.discount_rate,
+            reporting_config.discount_rate,
         )
 
     # ----------------------------------------- per-policy scenario cash flows
+    # Break out cash flows by individual policy for the single selected scenario
+    # (used in the Scenario Results sheet)
     scenario_policy_cash_flows: np.ndarray | None = None
-    if config.create_scenario_results:
-        s_idx = config.scenario_id - 1  # 0-based
-        if random_table is not None:
-            random_vec = random_table[s_idx, :]  # (n_policies,)
+    if reporting_config.create_scenario_results:
+        # Convert 1-based scenario number to 0-based array index
+        scenario_index: int = reporting_config.scenario_id - 1
+
+        if random_number_table is not None:
+            # Use the pre-loaded random number row for this scenario
+            random_numbers_for_scenario: np.ndarray = random_number_table[
+                scenario_index, :
+            ]
         else:
-            random_vec = np.array(
+            # Re-derive the exact random numbers that were used in the projection
+            # for this scenario, using the same per-policy seeded RNG streams
+            random_numbers_for_scenario = np.array(
                 [
-                    float(np.random.default_rng(params.random_seed + p).random(s_idx + 1)[-1])
-                    for p in range(len(policies))
+                    float(
+                        np.random.default_rng(
+                            model_parameters.random_seed + policy_index
+                        ).random(scenario_index + 1)[-1]
+                    )
+                    for policy_index in range(len(inforce_policies))
                 ],
                 dtype=np.float64,
             )
-        cum_death = 1.0 - cum_survival  # (n_policies, n_years)
-        survive = random_vec[:, np.newaxis] > cum_death  # (n_policies, n_years)
-        benefits = np.array([p.annual_benefit for p in policies], dtype=np.float64)
-        scenario_policy_cash_flows = survive.astype(np.float64) * benefits[:, np.newaxis]
 
-    # ---------------------------------------------------------- policy detail
-    policy_detail = None
-    if config.create_policy_results:
-        p_idx = config.policy_id - 1  # 0-based
-        s_idx = config.policy_scenario_id - 1  # 0-based
-        policy = policies[p_idx]
-        if random_table is not None:
-            rng_val = float(random_table[s_idx, p_idx])
-        else:
-            rng = np.random.default_rng(params.random_seed + p_idx)
-            rng_val = float(rng.random(config.policy_scenario_id)[-1])
-        policy_detail = proj_engine.build_policy_detail(
-            policy,
-            config.policy_scenario_id,
-            mortality_table,
-            projection_years,
-            rng_val,
+        # Cumulative death probability for each (policy, year): 1 - tPx
+        cumulative_death_probability: np.ndarray = 1.0 - cumulative_survival_matrix
+
+        # Survival flag for each (policy, year): 1 if alive, 0 if dead.
+        # random_numbers_for_scenario[:, np.newaxis] broadcasts to (n_policies, n_years)
+        policy_survival_flags: np.ndarray = (
+            random_numbers_for_scenario[:, np.newaxis] > cumulative_death_probability
         )
 
-    runtime = time.perf_counter() - t_start
+        annual_benefits: np.ndarray = np.array(
+            [p.annual_benefit for p in inforce_policies], dtype=np.float64
+        )
 
-    results = ModelResults(
-        policies=policies,
+        # Cash flow per policy per year: benefit if alive, zero if dead
+        scenario_policy_cash_flows = (
+            policy_survival_flags.astype(np.float64) * annual_benefits[:, np.newaxis]
+        )
+
+    # ---------------------------------------------------------- policy detail
+    # Build the detailed per-year table for one (policy, scenario) pair
+    # (used in the Policy Results sheet)
+    policy_detail = None
+    if reporting_config.create_policy_results:
+        # Convert 1-based IDs to 0-based array indices
+        policy_index: int = reporting_config.policy_id - 1
+        scenario_index = reporting_config.policy_scenario_id - 1
+        selected_policy = inforce_policies[policy_index]
+
+        if random_number_table is not None:
+            random_number_for_policy: float = float(
+                random_number_table[scenario_index, policy_index]
+            )
+        else:
+            # Reproduce the same random number that was used for this policy in the projection
+            random_number_generator = np.random.default_rng(
+                model_parameters.random_seed + policy_index
+            )
+            random_number_for_policy = float(
+                random_number_generator.random(reporting_config.policy_scenario_id)[-1]
+            )
+
+        policy_detail = projection_engine.build_policy_detail(
+            selected_policy,
+            reporting_config.policy_scenario_id,
+            mortality_table,
+            projection_years,
+            random_number_for_policy,
+        )
+
+    total_runtime_seconds: float = time.perf_counter() - run_start_time
+
+    # Bundle all outputs into a single ModelResults object for the writer
+    model_results: ModelResults = ModelResults(
+        policies=inforce_policies,
         projection_years=projection_years,
-        cum_survival=cum_survival,
+        cumulative_survival_matrix=cumulative_survival_matrix,
         scenario_cash_flows=scenario_cash_flows,
         scenario_policy_cash_flows=scenario_policy_cash_flows,
-        pv_by_scenario=pv_by_scenario,
+        pv_by_scenario=present_value_by_scenario,
         policy_detail=policy_detail,
-        runtime_seconds=runtime,
-        config=config,
+        runtime_seconds=total_runtime_seconds,
+        config=reporting_config,
     )
 
     # --------------------------------------------------------------- write
     if verbose:
         print("Writing results...", end=" ", flush=True)
-    t_step = time.perf_counter()
-    writer = ReportWriter(output_dir)
-    out_path = writer.write(results)
-    if verbose:
-        print(f"done ({time.perf_counter() - t_step:.1f}s)")
-        print(f"Total runtime: {runtime:.1f}s")
+    step_start_time = time.perf_counter()
 
-    return out_path
+    report_writer: ReportWriter = ReportWriter(output_dir)
+    output_path: Path = report_writer.write(model_results)
+
+    if verbose:
+        print(f"done ({time.perf_counter() - step_start_time:.1f}s)")
+        print(f"Total runtime: {total_runtime_seconds:.1f}s")
+
+    return output_path
