@@ -272,8 +272,8 @@ class ReportWriter:
         """
         fig, ax = plt.subplots(figsize=(10, 5))
         if selected_indices is not None:
-            percentile_labels = [f"P{i * 10}" for i in range(len(selected_indices))]
-            for label, s in zip(percentile_labels, selected_indices):
+            for i, s in enumerate(selected_indices):
+                label = f"Percentile_{i * 10}_Scenario_{int(s) + 1}"
                 ax.plot(years, scenario_cash_flows[s], label=label)
         else:
             for s in range(scenario_cash_flows.shape[0]):
