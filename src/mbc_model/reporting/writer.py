@@ -140,17 +140,25 @@ class ReportWriter:
         policy_cfs = results.scenario_policy_cash_flows  # (n_policies, n_years) or None
         scenario_cf = results.scenario_cash_flows[scenario_idx]  # (n_years,)
 
+        large = len(policies) > 10
+
         ws = wb.create_sheet("Scenario Results")
         ws.append(["Scenario", cfg.scenario_id])
-        ws.append([None, "Cash Flow Projection by Contract"])
-        ws.append(["Year \\ Contract"] + [p.policy_id for p in policies] + ["Total"])
+        ws.append([None, "Cash Flow Projection by Policy"])
+        if large:
+            ws.append(["Year", "Total"])
+        else:
+            ws.append(["Year \\ Policy"] + [p.policy_id for p in policies] + ["Total"])
 
         for t, year in enumerate(years):
-            if policy_cfs is not None:
-                per_policy = [float(policy_cfs[p, t]) for p in range(len(policies))]
+            if large:
+                ws.append([int(year), float(scenario_cf[t])])
             else:
-                per_policy = [""] * len(policies)
-            ws.append([int(year)] + per_policy + [float(scenario_cf[t])])
+                if policy_cfs is not None:
+                    per_policy = [float(policy_cfs[p, t]) for p in range(len(policies))]
+                else:
+                    per_policy = [""] * len(policies)
+                ws.append([int(year)] + per_policy + [float(scenario_cf[t])])
 
         if cfg.create_scenario_graph:
             chart_policy_cfs = None if len(policies) > 10 else policy_cfs
@@ -178,14 +186,15 @@ class ReportWriter:
 
         ws.append(["Discount Rate", discount_rate])
         ws.append(["PV Cash Flow"] + [float(pv[s]) for s in range(n_scenarios)])
-        ws.append([None, "Total Cash Flow by Scenario"])
-        ws.append(["Year \\ Scen"] + list(range(1, n_scenarios + 1)))
 
-        for t_idx, year in enumerate(years):
-            row = [int(year)] + [
-                float(results.scenario_cash_flows[s, t_idx]) for s in range(n_scenarios)
-            ]
-            ws.append(row)
+        if n_scenarios <= 25:
+            ws.append([None, "Total Cash Flow by Scenario"])
+            ws.append(["Year \\ Scen"] + list(range(1, n_scenarios + 1)))
+            for t_idx, year in enumerate(years):
+                row = [int(year)] + [
+                    float(results.scenario_cash_flows[s, t_idx]) for s in range(n_scenarios)
+                ]
+                ws.append(row)
 
     def _write_dashboard_results(
         self, wb: openpyxl.Workbook, results: ModelResults
