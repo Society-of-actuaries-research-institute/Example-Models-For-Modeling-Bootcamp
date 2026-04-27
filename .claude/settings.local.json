@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.claude/skills/gstack/bin/gstack-config set *)",
+      "Bash(touch ~/.claude/skills/gstack/.feature-prompted-continuous-checkpoint)",
+      "Bash(py -3 -c ' *)",
+      "Bash(py -3 -m pip install -q openpyxl pandas)",
+      "Bash(py -3 -m pytest tests/engine/test_mortality.py -v)",
+      "Bash(py -3 -m pip install -e \".[dev]\" -q)",
+      "Bash(py -3 -c \"import mbc_model; import pytest; print\\('OK'\\)\")",
+      "Bash(py -3 -m pip install -e . --no-deps -q)",
+      "Bash(py -3 -m pip install pytest pytest-cov numpy pandas openpyxl matplotlib mypy black pylint -q)",
+      "Bash(py -3 -c \"import mbc_model; import pytest; import numpy; print\\('OK'\\)\")",
+      "Bash(py -3 -m pip install pytest pytest-cov -q --force-reinstall)",
+      "Read(//c/Python312/Scripts/**)",
+      "Bash(del \"C:\\\\Python312\\\\Scripts\\\\pygmentize.exe.deleteme\")",
+      "PowerShell(py -3 -m pip install pytest pytest-cov 2>&1)",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(.venv/Scripts/python -c \"import pytest; import numpy; import mbc_model; print\\('OK'\\)\")",
+      "Bash(.venv/Scripts/python -m pytest tests/engine/test_mortality.py -v)",
+      "Bash(.venv/Scripts/python -m pytest tests/engine/ -v -m \"not slow\" --no-cov)",
+      "Bash(.venv/Scripts/python -m pytest tests/integration/test_rnd_parity.py -v --no-cov)",
+      "Bash(.venv/Scripts/python -m pytest tests/data/test_loader.py -v --no-cov)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -v -m \"not slow\" --no-cov)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -m \"not slow\" --cov=mbc_model --cov-report=term-missing --no-cov-on-fail)",
+      "Bash(.venv/Scripts/python -m pylint src/mbc_model --fail-under=9.0 --rcfile=.pylintrc)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -m \"not slow\" --cov=mbc_model --cov-report=term-missing)",
+      "Bash(git add *)",
+      "Bash(.venv/Scripts/python -m pytest tests/reporting/test_writer.py tests/integration/test_runner.py -v --no-cov)",
+      "Bash(git commit -m ' *)",
+      "Bash(.venv/Scripts/python -m pytest tests/engine/test_projection.py::test_project_from_table_peak_memory -v --no-cov)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -m \"not slow\" --no-cov -q)",
+      "Bash(.venv/Scripts/python -m pytest tests/engine/test_projection.py::test_project_from_table_peak_memory -v --no-cov -s)",
+      "Bash(.venv/Scripts/python -m pytest -m \"not slow\" --no-cov -q)",
+      "Bash(.venv/Scripts/python -c ' *)"
+    ]
+  }
+}
