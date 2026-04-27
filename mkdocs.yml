@@ -2,6 +2,7 @@ site_name: MBC Production Model
 site_description: Production-quality actuarial cash flow model — SOA Modeling Bootcamp 2026
 
 docs_dir: docs
+use_directory_urls: false
 
 theme:
   name: material
