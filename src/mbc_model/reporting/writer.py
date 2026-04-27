@@ -220,7 +220,9 @@ class ReportWriter:
         ws.append(["Discount rate", None, cfg.discount_rate])
         ws.append(["PV Cash Flow Statistics"])
         ws.append(["Mean", "Median", "Std Dev", "Min", "Max", "Runtime"])
-        ws.append([mean_pv, median_pv, std_pv, min_pv, max_pv, results.runtime_seconds])
+        total_s = int(results.runtime_seconds)
+        runtime_str = f"{total_s // 3600:02d}:{(total_s % 3600) // 60:02d}:{total_s % 60:02d}"
+        ws.append([mean_pv, median_pv, std_pv, min_pv, max_pv, runtime_str])
 
         if cfg.create_dashboard_graph:
             selected: np.ndarray | None = None
