@@ -153,9 +153,10 @@ class ReportWriter:
             ws.append([int(year)] + per_policy + [float(scenario_cf[t])])
 
         if cfg.create_scenario_graph:
+            chart_policy_cfs = None if len(policies) > 10 else policy_cfs
             fig = self._make_stacked_bar_chart(
                 years=years,
-                policy_cfs=policy_cfs,
+                policy_cfs=chart_policy_cfs,
                 total_cf=scenario_cf,
                 policies=policies,
                 title=f"Scenario {cfg.scenario_id} Cash Flows by Policy",
@@ -213,10 +214,15 @@ class ReportWriter:
         ws.append([mean_pv, median_pv, std_pv, min_pv, max_pv, results.runtime_seconds])
 
         if cfg.create_dashboard_graph:
+            selected: np.ndarray | None = None
+            if n_used > 25:
+                sorted_idx = np.argsort(pv_subset)
+                positions = np.round(np.linspace(0, n_used - 1, 11)).astype(int)
+                selected = sorted_idx[positions]
             fig = self._make_scenario_lines_chart(
                 years=results.projection_years,
                 scenario_cash_flows=results.scenario_cash_flows[:n_used],
-                n_scenarios=n_used,
+                selected_indices=selected,
             )
             self._embed_chart(ws, fig, anchor="A" + str(ws.max_row + 2))
 
@@ -257,12 +263,21 @@ class ReportWriter:
     def _make_scenario_lines_chart(
         years: np.ndarray,
         scenario_cash_flows: np.ndarray,
-        n_scenarios: int,
+        selected_indices: "np.ndarray | None" = None,
     ) -> "plt.Figure":
-        """One line per scenario over projection years, matching plot_cash_flows_by_scenario."""
+        """One line per scenario over projection years.
+
+        When selected_indices is provided, only those rows are plotted and
+        labelled as P0, P10, …, P100 (percentile representatives).
+        """
         fig, ax = plt.subplots(figsize=(10, 5))
-        for s in range(n_scenarios):
-            ax.plot(years, scenario_cash_flows[s], label=f"Scenario_{s + 1}")
+        if selected_indices is not None:
+            percentile_labels = [f"P{i * 10}" for i in range(len(selected_indices))]
+            for label, s in zip(percentile_labels, selected_indices):
+                ax.plot(years, scenario_cash_flows[s], label=label)
+        else:
+            for s in range(scenario_cash_flows.shape[0]):
+                ax.plot(years, scenario_cash_flows[s], label=f"Scenario_{s + 1}")
         ax.set_title("Cash Flow Projection by Scenario")
         ax.set_xlabel("Year")
         ax.set_ylabel("Cash Flow")
