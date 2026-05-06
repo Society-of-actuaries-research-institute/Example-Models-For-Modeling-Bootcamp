@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MBC Model Desktop UI Mockup</title>
+  <style>
+    :root {
+      --bg: #eef1ee;
+      --panel: #fbfcfb;
+      --panel-alt: #f5f7f6;
+      --ink: #202421;
+      --muted: #68736c;
+      --line: #d4dad5;
+      --accent: #0f6b5f;
+      --accent-strong: #094c44;
+      --warn: #b56211;
+      --rose: #8a3356;
+      --shadow: 0 12px 28px rgba(28, 36, 31, 0.12);
+      --radius: 8px;
+      --font: "Segoe UI", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      width: min(1240px, calc(100vw - 32px));
+      min-height: min(820px, calc(100vh - 32px));
+      margin: 16px auto;
+      background: var(--panel);
+      border: 1px solid #cbd3ce;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: 44px 56px 1fr 30px;
+      overflow: hidden;
+    }
+
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: #26312d;
+      color: #f7fbf8;
+    }
+
+    .titlebar h1 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .window-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #dce3df;
+      opacity: 0.72;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #f8faf8;
+    }
+
+    .tabs,
+    .toolbar-actions,
+    .file-actions,
+    .view-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab {
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .tab[aria-selected="true"] {
+      color: var(--ink);
+      background: #ffffff;
+      border-color: var(--line);
+      box-shadow: 0 1px 2px rgba(24, 32, 28, 0.06);
+    }
+
+    .btn {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      background: #ffffff;
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn.primary {
+      border-color: var(--accent-strong);
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 650;
+    }
+
+    .btn.icon {
+      width: 36px;
+      padding: 0;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .btn:focus,
+    .tab:focus,
+    .input-path:focus,
+    select:focus {
+      outline: 3px solid rgba(15, 107, 95, 0.22);
+      outline-offset: 1px;
+    }
+
+    .content {
+      min-height: 0;
+      background: var(--panel-alt);
+      display: grid;
+      overflow: hidden;
+    }
+
+    .screen {
+      min-height: 0;
+      display: none;
+      overflow: auto;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .layout {
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .layout.inputs {
+      grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-width: 0;
+    }
+
+    .panel-header {
+      min-height: 46px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-header h2,
+    .panel-header h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .panel-body {
+      padding: 12px;
+    }
+
+    .file-picker {
+      display: grid;
+      gap: 10px;
+    }
+
+    .input-path {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 10px;
+      color: #2f3834;
+      background: #ffffff;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      min-height: 76px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .metric .value {
+      font-size: 20px;
+      font-weight: 750;
+    }
+
+    .metric .subvalue {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .settings-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #edf0ee;
+    }
+
+    .setting-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .setting-row span:first-child {
+      color: var(--muted);
+    }
+
+    .preview-tabs {
+      display: flex;
+      gap: 6px;
+    }
+
+    .preview-tab {
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--muted);
+    }
+
+    .preview-tab.active {
+      color: #ffffff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+    }
+
+    .table-wrap.preview-scroll {
+      max-height: 510px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #edf0ee;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #4c5752;
+      background: #f3f6f4;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td input,
+    td select {
+      width: 100%;
+      min-width: 84px;
+      height: 30px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      padding: 0 7px;
+      background: #f8faf8;
+      color: var(--ink);
+    }
+
+    td input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    td input[type="number"]::-webkit-outer-spin-button,
+    td input[type="number"]::-webkit-inner-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    td input:focus,
+    td select:focus {
+      border-color: var(--accent);
+      outline: 3px solid rgba(15, 107, 95, 0.18);
+      background: #ffffff;
+    }
+
+    .table-footer {
+      padding: 9px 10px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      background: #f8faf8;
+      font-size: 12px;
+    }
+
+    .sheet-content,
+    .output-content {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .sheet-section,
+    .output-section {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #f3f6f4;
+      color: #3d4742;
+      font-weight: 700;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .sticky-table {
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .sticky-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    .sticky-table th:first-child,
+    .sticky-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #ffffff;
+      box-shadow: 1px 0 0 var(--line);
+    }
+
+    .sticky-table thead th:first-child {
+      z-index: 4;
+      background: #f3f6f4;
+    }
+
+    .sheet-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn.save {
+      color: var(--muted);
+      background: #edf1ee;
+      border-color: var(--line);
+    }
+
+    .btn.save.dirty {
+      color: #ffffff;
+      background: var(--warn);
+      border-color: #7c430b;
+      font-weight: 700;
+    }
+
+    .btn.save:disabled {
+      cursor: default;
+      opacity: 0.75;
+    }
+
+    .statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 14px;
+      border-top: 1px solid var(--line);
+      background: #f8faf8;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .run-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .run-card {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 12px;
+      min-height: 82px;
+    }
+
+    .run-card .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 9px;
+    }
+
+    .run-card .value {
+      font-size: 18px;
+      font-weight: 750;
+    }
+
+    .run-card .value.file-name {
+      font-size: 13px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .run-card .btn {
+      margin-top: 8px;
+      min-height: 30px;
+    }
+
+    .run-card .file-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .run-card .file-row .btn {
+      margin-top: 0;
+    }
+
+    .outputs-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .chart-panel {
+      height: 330px;
+      overflow: hidden;
+    }
+
+    .chart {
+      height: 232px;
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background:
+        linear-gradient(to top, rgba(32, 36, 33, 0.08) 1px, transparent 1px) 0 0 / 100% 46px,
+        #ffffff;
+      overflow: hidden;
+    }
+
+    .stacked-chart {
+      padding: 18px 16px 28px;
+    }
+
+    .stacked-bars {
+      position: absolute;
+      inset: 22px 24px 30px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      align-items: end;
+      gap: 11px;
+    }
+
+    .stacked-column {
+      height: var(--h);
+      display: grid;
+      grid-template-rows: var(--a) var(--b) var(--c) var(--d);
+      align-items: stretch;
+      border-radius: 4px 4px 0 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stacked-column span:nth-child(1) { background: #0f6b5f; }
+    .stacked-column span:nth-child(2) { background: #8a3356; }
+    .stacked-column span:nth-child(3) { background: #b56211; }
+    .stacked-column span:nth-child(4) { background: #49617a; }
+
+    .stacked-column::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 50%;
+      bottom: -22px;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .total-line {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .bars {
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      align-items: end;
+      gap: 10px;
+      padding: 22px 20px 28px;
+    }
+
+    .bar {
+      border-radius: 4px 4px 0 0;
+      background: var(--accent);
+      min-height: 16px;
+      position: relative;
+    }
+
+    .bar:nth-child(3n) {
+      background: var(--warn);
+    }
+
+    .bar:nth-child(4n) {
+      background: var(--rose);
+    }
+
+    .bar::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 50%;
+      bottom: -22px;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .line-chart svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .chart-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .output-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .output-tab {
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 0 10px;
+      color: var(--muted);
+    }
+
+    .output-tab.active {
+      color: #ffffff;
+      background: #26312d;
+      border-color: #26312d;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .log-list li {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .time {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-table {
+      min-width: 760px;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .empty-state {
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      border: 1px dashed #bfc8c2;
+      border-radius: 6px;
+      background: #ffffff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .hidden-input {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        width: 100vw;
+        min-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+      }
+
+      .layout.inputs,
+      .outputs-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .run-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .toolbar-actions {
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" role="application" aria-label="MBC model desktop mockup">
+    <header class="titlebar">
+      <h1>MBC Production Model</h1>
+      <div class="window-controls" aria-hidden="true">
+        <span class="window-dot"></span>
+        <span class="window-dot"></span>
+        <span class="window-dot"></span>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <nav class="tabs" aria-label="Main sections">
+        <button class="tab" id="tab-inputs" aria-selected="true" data-screen="inputs-screen">Inputs</button>
+        <button class="tab" id="tab-outputs" aria-selected="false" data-screen="outputs-screen">Outputs</button>
+        <button class="tab" id="tab-log" aria-selected="false" data-screen="log-screen">Run Log</button>
+      </nav>
+      <div class="toolbar-actions">
+        <button class="btn primary" type="button" id="runButton">Run Model</button>
+      </div>
+    </div>
+
+    <main class="content">
+      <section class="screen active" id="inputs-screen" aria-labelledby="tab-inputs">
+        <div class="layout inputs">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Input Workbook</h2>
+            </div>
+            <div class="panel-body">
+              <div class="file-picker">
+                <input class="input-path" id="filePath" value="inputs/Interface_Example_v4.xlsm" readonly>
+                <div class="file-actions">
+                  <button class="btn" type="button" id="browseButton">Browse</button>
+                  <button class="btn" type="button" id="clearButton">Clear</button>
+                </div>
+                <input class="hidden-input" id="fileInput" type="file" accept=".xlsm,.xlsx">
+              </div>
+
+              <div class="meta-grid">
+                <div class="metric">
+                  <div class="label">Policies</div>
+                  <div class="value" id="policyCount">10</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Scenarios</div>
+                  <div class="value" id="scenarioCount">25</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Projection</div>
+                  <div class="value">2025-2085</div>
+                  <div class="subvalue">61 years</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Discount Rate</div>
+                  <div class="value">4.00%</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Random Numbers</div>
+                  <div class="value" id="randomNumbersSetting">Workbook table</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2 id="sheetTitle">Inforce Editor</h2>
+              <div class="preview-tabs" aria-label="Workbook sheets">
+                <button class="preview-tab active" type="button" data-sheet="inforce">Inforce</button>
+                <button class="preview-tab" type="button" data-sheet="parameters">Parameters</button>
+                <button class="preview-tab" type="button" data-sheet="reporting">Reporting</button>
+              </div>
+              <div class="sheet-actions">
+                <button class="btn save" type="button" id="saveWorkbookButton" disabled>Save</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="sheet-content" id="sheetContent"></div>
+              <div class="table-footer" id="sheetFooter">Showing all 10 policies</div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="screen" id="outputs-screen" aria-labelledby="tab-outputs">
+        <div class="layout">
+          <section class="run-strip" aria-label="Run summary">
+            <div class="run-card">
+              <div class="label">Status</div>
+              <div class="value" id="runStatus">Ready</div>
+            </div>
+            <div class="run-card">
+              <div class="label">Runtime</div>
+              <div class="value" id="runtime">00:00:03</div>
+            </div>
+            <div class="run-card">
+              <div class="label">Output File</div>
+              <div class="file-row">
+                <div class="value file-name">results_20260427_145519.xlsx</div>
+                <a class="btn" href="../../outputs/results_20260427_145519.xlsx">Open</a>
+              </div>
+            </div>
+            <div class="run-card">
+              <div class="label">Policies Projected</div>
+              <div class="value">10</div>
+            </div>
+            <div class="run-card">
+              <div class="label">Scenarios Projected</div>
+              <div class="value">25</div>
+            </div>
+          </section>
+
+          <div class="outputs-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Output Tables</h2>
+                <div class="output-tabs" aria-label="Output tables">
+                  <button class="output-tab active" type="button" data-output="dashboard">Dashboard</button>
+                  <button class="output-tab" type="button" data-output="total">Total</button>
+                  <button class="output-tab" type="button" data-output="scenario">Scenario</button>
+                  <button class="output-tab" type="button" data-output="policy">Policy</button>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="output-content" id="outputContent"></div>
+                <div class="table-footer" id="outputFooter">Showing Dashboard Results</div>
+              </div>
+            </section>
+
+            <div class="stack">
+              <section class="panel chart-panel">
+                <div class="panel-header">
+                  <h3>Scenario 25 Cash Flows by Policy</h3>
+                </div>
+                <div class="panel-body">
+                  <div class="chart stacked-chart" aria-label="Scenario 25 cash flows by policy">
+                    <div class="stacked-bars" aria-hidden="true">
+                      <div class="stacked-column" style="--h: 82%; --a: 18fr; --b: 30fr; --c: 24fr; --d: 28fr;" data-label="2025"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 82%; --a: 17fr; --b: 30fr; --c: 24fr; --d: 29fr;" data-label="2026"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 79%; --a: 18fr; --b: 29fr; --c: 23fr; --d: 30fr;" data-label="2027"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 73%; --a: 19fr; --b: 28fr; --c: 21fr; --d: 32fr;" data-label="2028"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 68%; --a: 18fr; --b: 30fr; --c: 20fr; --d: 32fr;" data-label="2029"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 61%; --a: 20fr; --b: 28fr; --c: 18fr; --d: 34fr;" data-label="2030"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 57%; --a: 18fr; --b: 31fr; --c: 17fr; --d: 34fr;" data-label="2031"><span></span><span></span><span></span><span></span></div>
+                      <div class="stacked-column" style="--h: 49%; --a: 21fr; --b: 26fr; --c: 16fr; --d: 37fr;" data-label="2032"><span></span><span></span><span></span><span></span></div>
+                    </div>
+                    <svg class="total-line" viewBox="0 0 620 232" aria-hidden="true">
+                      <polyline points="38,56 112,56 186,63 260,77 334,88 408,105 482,115 556,134" fill="none" stroke="#111" stroke-width="3" stroke-dasharray="8 5"></polyline>
+                      <g fill="#111">
+                        <circle cx="38" cy="56" r="4"></circle>
+                        <circle cx="112" cy="56" r="4"></circle>
+                        <circle cx="186" cy="63" r="4"></circle>
+                        <circle cx="260" cy="77" r="4"></circle>
+                        <circle cx="334" cy="88" r="4"></circle>
+                        <circle cx="408" cy="105" r="4"></circle>
+                        <circle cx="482" cy="115" r="4"></circle>
+                        <circle cx="556" cy="134" r="4"></circle>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="chart-note">Stacked policy cash flows by year with a dashed Total line.</div>
+                </div>
+              </section>
+
+              <section class="panel chart-panel">
+                <div class="panel-header">
+                  <h3>Cash Flow Projection by Scenario</h3>
+                </div>
+                <div class="panel-body">
+                  <div class="chart line-chart" aria-label="Scenario cash flow line chart">
+                    <svg viewBox="0 0 620 232" role="img" aria-labelledby="lineChartTitle">
+                      <title id="lineChartTitle">Cash flow projection by year</title>
+                      <polyline points="30,176 88,152 146,128 204,111 262,104 320,96 378,91 436,88 494,93 552,108 590,126" fill="none" stroke="#0f6b5f" stroke-width="4"></polyline>
+                      <polyline points="30,188 88,170 146,143 204,139 262,119 320,116 378,107 436,112 494,127 552,136 590,151" fill="none" stroke="#8a3356" stroke-width="3"></polyline>
+                      <polyline points="30,164 88,148 146,140 204,122 262,110 320,107 378,102 436,100 494,112 552,119 590,138" fill="none" stroke="#b56211" stroke-width="3"></polyline>
+                      <g fill="#26312d">
+                        <circle cx="30" cy="176" r="4"></circle>
+                        <circle cx="204" cy="111" r="4"></circle>
+                        <circle cx="378" cy="91" r="4"></circle>
+                        <circle cx="590" cy="126" r="4"></circle>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="chart-note">Representative scenarios across projection years.</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="log-screen" aria-labelledby="tab-log">
+        <div class="layout">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Run Log</h2>
+            </div>
+            <div class="panel-body">
+              <div class="table-wrap">
+                <table class="log-table" aria-label="Run log">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>User</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>2026-05-06</td>
+                      <td class="time">10:42:11</td>
+                      <td>iniki</td>
+                      <td>Loaded workbook inputs/Interface_Example_v4.xlsm</td>
+                    </tr>
+                    <tr>
+                      <td>2026-05-06</td>
+                      <td class="time">10:42:12</td>
+                      <td>iniki</td>
+                      <td>Computed cumulative survival matrix</td>
+                    </tr>
+                    <tr>
+                      <td>2026-05-06</td>
+                      <td class="time">10:42:13</td>
+                      <td>iniki</td>
+                      <td>Projected 10 policies across 25 scenarios</td>
+                    </tr>
+                    <tr>
+                      <td>2026-05-06</td>
+                      <td class="time">10:42:14</td>
+                      <td>iniki</td>
+                      <td>Wrote output workbook and refreshed output tables</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="statusbar">
+      <span id="statusText">Workbook ready</span>
+      <span>Python 3.11 | Excel macro workbook input</span>
+    </footer>
+  </div>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const screens = Array.from(document.querySelectorAll(".screen"));
+    const sheetTabs = Array.from(document.querySelectorAll(".preview-tab"));
+    const outputTabs = Array.from(document.querySelectorAll(".output-tab"));
+    const fileInput = document.getElementById("fileInput");
+    const filePath = document.getElementById("filePath");
+    const statusText = document.getElementById("statusText");
+    const runButton = document.getElementById("runButton");
+    const runStatus = document.getElementById("runStatus");
+    const sheetTitle = document.getElementById("sheetTitle");
+    const sheetContent = document.getElementById("sheetContent");
+    const sheetFooter = document.getElementById("sheetFooter");
+    const saveWorkbookButton = document.getElementById("saveWorkbookButton");
+    const outputContent = document.getElementById("outputContent");
+    const outputFooter = document.getElementById("outputFooter");
+    const previewLimit = 100;
+    const inputTableFullLimit = 150;
+
+    let activeSheet = "inforce";
+    let activeOutput = "dashboard";
+    let workbook = {
+      policyCount: 10,
+      scenarioCount: 25,
+      randomNumbers: "Workbook table"
+    };
+
+    function showScreen(screenId) {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.screen === screenId;
+        tab.setAttribute("aria-selected", String(isActive));
+      });
+      screens.forEach((screen) => {
+        screen.classList.toggle("active", screen.id === screenId);
+      });
+    }
+
+    function formatMoney(value) {
+      return "$" + Math.round(value).toLocaleString("en-US");
+    }
+
+    function formatNumber(value, digits = 2) {
+      return Number(value).toLocaleString("en-US", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function columnLetters(count) {
+      const labels = [];
+      for (let i = 0; i < count; i += 1) {
+        let n = i;
+        let label = "";
+        do {
+          label = String.fromCharCode(65 + (n % 26)) + label;
+          n = Math.floor(n / 26) - 1;
+        } while (n >= 0);
+        labels.push(label);
+      }
+      return labels;
+    }
+
+    function tableHtml(headers, rows, options = {}) {
+      const classes = options.sticky ? "table-wrap sticky-table" : "table-wrap";
+      const headerHtml = headers.map((header) => `<th>${header}</th>`).join("");
+      const rowHtml = rows.map((row) => {
+        const cells = row.map((cell) => `<td>${cell ?? ""}</td>`).join("");
+        return `<tr>${cells}</tr>`;
+      }).join("");
+      const headHtml = options.hideHeader ? "" : `<thead><tr>${headerHtml}</tr></thead>`;
+      return `
+        <div class="${classes}">
+          <table aria-label="${options.label || "Table preview"}">
+            ${headHtml}
+            <tbody>${rowHtml}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function sectionHtml(title, rows, headers, note = "", options = {}) {
+      return `
+        <section class="${options.output ? "output-section" : "sheet-section"}">
+          <div class="section-title">
+            <span>${title}</span>
+            ${note ? `<span class="section-note">${note}</span>` : ""}
+          </div>
+          ${tableHtml(headers, rows, options)}
+        </section>
+      `;
+    }
+
+    function editableInput(value, type = "text", readonly = false) {
+      const disabled = readonly ? " disabled" : "";
+      return `<input data-editable="true" type="${type}" value="${value}"${disabled}>`;
+    }
+
+    function genderSelect(value, readonly = false) {
+      return `
+        <select data-editable="true"${readonly ? " disabled" : ""}>
+          <option${value === "M" ? " selected" : ""}>M</option>
+          <option${value === "F" ? " selected" : ""}>F</option>
+        </select>
+      `;
+    }
+
+    function setDirty(isDirty) {
+      saveWorkbookButton.disabled = !isDirty;
+      saveWorkbookButton.classList.toggle("dirty", isDirty);
+      statusText.textContent = isDirty ? "Unsaved workbook edits" : "Workbook ready";
+    }
+
+    function samplePolicy(index) {
+      const yobs = [1951, 1953, 1947, 1958, 1960, 1949, 1955, 1962, 1950, 1956];
+      const genders = ["M", "F", "M", "F", "M", "F", "M", "F", "M", "F"];
+      const benefits = [20000, 98000, 65000, 49000, 39000, 78000, 28000, 50000, 22000, 96000];
+      const offset = index % yobs.length;
+      return {
+        policy: index + 1,
+        yob: yobs[offset] - Math.floor(index / yobs.length),
+        gender: genders[offset],
+        benefit: benefits[offset]
+      };
+    }
+
+    function renderInforce() {
+      const editable = workbook.policyCount <= previewLimit;
+      const shown = Math.min(workbook.policyCount, previewLimit);
+      sheetTitle.textContent = editable ? "Inforce Editor" : "Inforce Preview";
+      const rows = [];
+
+      for (let i = 0; i < shown; i += 1) {
+        const policy = samplePolicy(i);
+        if (editable) {
+          rows.push([
+            policy.policy,
+            editableInput(policy.yob, "number"),
+            genderSelect(policy.gender),
+            editableInput(policy.benefit, "number")
+          ]);
+        } else {
+          rows.push([policy.policy, policy.yob, policy.gender, formatMoney(policy.benefit)]);
+        }
+      }
+
+      sheetContent.innerHTML = tableHtml(
+        ["Policy #", "YOB", "Gender", "Annual Benefit"],
+        rows,
+        { sticky: true, label: editable ? "Inforce editor" : "Inforce preview" }
+      );
+
+      sheetFooter.textContent = workbook.policyCount > previewLimit
+        ? `Showing first ${previewLimit} of ${workbook.policyCount.toLocaleString("en-US")} policies. More policies are in the workbook.`
+        : `Showing all ${workbook.policyCount.toLocaleString("en-US")} policies`;
+      setDirty(false);
+    }
+
+    function genderLikeSelect(value, options, readonly = false) {
+      return `
+        <select data-editable="true"${readonly ? " disabled" : ""}>
+          ${options.map((option) => `<option${option === value ? " selected" : ""}>${option}</option>`).join("")}
+        </select>
+      `;
+    }
+
+    function mortalityRows(kind) {
+      const rows = [];
+      for (let age = 0; age <= 121; age += 1) {
+        if (kind === "rates") {
+          const male = age === 121 ? 1 : Math.min(1, 0.00018 + Math.pow(age + 1, 2.35) / 6000000);
+          const female = age === 121 ? 1 : Math.min(1, male * 0.82 + 0.000035);
+          rows.push([age, editableInput(male.toFixed(6), "number"), editableInput(female.toFixed(6), "number")]);
+        } else {
+          const scale = age < 90 ? 0.01 : age < 110 ? 0.004 : 0;
+          rows.push([age, editableInput(scale.toFixed(4), "number"), editableInput(scale.toFixed(4), "number")]);
+        }
+      }
+      return rows;
+    }
+
+    function randomNumberRows(readonly) {
+      const scenarioRows = Math.min(workbook.scenarioCount, previewLimit);
+      const policyCols = Math.min(workbook.policyCount, previewLimit);
+      const rows = [];
+      for (let scenario = 1; scenario <= scenarioRows; scenario += 1) {
+        const row = [scenario];
+        for (let policy = 1; policy <= policyCols; policy += 1) {
+          const value = ((Math.sin(scenario * 13.17 + policy * 5.91) + 1) / 2).toFixed(6);
+          row.push(editableInput(value, "number", readonly));
+        }
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function renderParameters() {
+      sheetTitle.textContent = "Parameters Editor";
+      const randomEditable = workbook.scenarioCount < 100 && workbook.policyCount < 100;
+      const randomNote = randomEditable
+        ? "Editable because scenarios and policies are both below 100"
+        : "Read-only preview because scenarios or policies are 100+";
+      const randomPolicyCols = Math.min(workbook.policyCount, previewLimit);
+      const randomHeaders = ["Scenario \\ Policy", ...Array.from({ length: randomPolicyCols }, (_, index) => index + 1)];
+
+      sheetContent.innerHTML = [
+        sectionHtml("Projection Settings", [
+          ["Valuation Date", editableInput("2024-12-31"), "Start date of the projection"],
+          ["Last Projection Year", editableInput("2085", "number"), "Inclusive final year"],
+          ["Which Random Numbers?", genderLikeSelect(workbook.randomNumbers === "Seed" ? "Seed" : "Table", ["Seed", "Table"]), "Seed or workbook table"],
+          ["Random Numbers Seed", editableInput("1", "number"), "Used when random numbers are generated from a seed"]
+        ], ["Table", "Data", "Description"], "", { hideHeader: true }),
+        sectionHtml("Mortality Rates", mortalityRows("rates"), ["Age \\ Gender", "Male", "Female"], "", { sticky: true }),
+        sectionHtml("Projection Scale", mortalityRows("scale"), ["Age \\ Gender", "Male", "Female"], "", { sticky: true }),
+        sectionHtml("Random Numbers", randomNumberRows(!randomEditable), randomHeaders, randomNote, { sticky: true })
+      ].join("");
+
+      sheetFooter.textContent = workbook.scenarioCount > previewLimit || workbook.policyCount > previewLimit
+        ? `Random Numbers preview shows first ${Math.min(workbook.scenarioCount, previewLimit)} scenarios x ${Math.min(workbook.policyCount, previewLimit)} policies. More cells are in the workbook.`
+        : "Parameters tables are fully shown and editable where allowed";
+      setDirty(false);
+    }
+
+    function renderReporting() {
+      sheetTitle.textContent = "Reporting Editor";
+      sheetContent.innerHTML = [
+        sectionHtml("Policy Results", [
+          ["Create?", genderLikeSelect("Yes", ["Yes", "No"])],
+          ["Policy", editableInput("1", "number")],
+          ["Scenario", editableInput(workbook.scenarioCount, "number")]
+        ], ["Parameter", "Value"], "", { hideHeader: true }),
+        sectionHtml("Scenario Results", [
+          ["Create?", genderLikeSelect("Yes", ["Yes", "No"])],
+          ["Scenario", editableInput(workbook.scenarioCount, "number")],
+          ["Create graph?", genderLikeSelect("Yes", ["Yes", "No"])]
+        ], ["Parameter", "Value"], "", { hideHeader: true }),
+        sectionHtml("Total Results", [
+          ["Create?", genderLikeSelect("Yes", ["Yes", "No"])]
+        ], ["Parameter", "Value"], "", { hideHeader: true }),
+        sectionHtml("Dashboard Results", [
+          ["Create?", genderLikeSelect("Yes", ["Yes", "No"])],
+          ["Scenarios", editableInput(workbook.scenarioCount, "number")],
+          ["Policies", editableInput(workbook.policyCount, "number")],
+          ["Discount Rate", editableInput("0.04", "number")],
+          ["Create graph?", genderLikeSelect("Yes", ["Yes", "No"])]
+        ], ["Parameter", "Value"], "", { hideHeader: true })
+      ].join("");
+      sheetFooter.textContent = "";
+      setDirty(false);
+    }
+
+    function renderSheet(sheet) {
+      activeSheet = sheet;
+      sheetTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.sheet === sheet));
+      if (sheet === "parameters") renderParameters();
+      else if (sheet === "reporting") renderReporting();
+      else renderInforce();
+    }
+
+    function updateWorkbookProfile(fileName) {
+      const lower = fileName.toLowerCase();
+      if (lower.includes("100k")) {
+        workbook = { policyCount: 100000, scenarioCount: 10000, randomNumbers: "Seed" };
+      } else if (lower.includes("50k")) {
+        workbook = { policyCount: 50000, scenarioCount: 10000, randomNumbers: "Seed" };
+      } else {
+        workbook = {
+          policyCount: 10,
+          scenarioCount: 25,
+          randomNumbers: lower.includes("seed") ? "Seed" : "Workbook table"
+        };
+      }
+      document.getElementById("policyCount").textContent = workbook.policyCount.toLocaleString("en-US");
+      document.getElementById("scenarioCount").textContent = workbook.scenarioCount.toLocaleString("en-US");
+      document.getElementById("randomNumbersSetting").textContent = workbook.randomNumbers;
+      renderSheet(activeSheet);
+    }
+
+    function totalResultsMatrix() {
+      const pvs = [
+        6631425, 6354650, 7385817, 5186940, 6618468, 6425921, 6389168, 4978421, 5923183,
+        6392266, 6351778, 7061120, 7134580, 6042120, 7834172, 6522100, 6119540, 5848220,
+        7284000, 6711320, 6209440, 5968080, 6905220, 6147360, 6669010
+      ];
+      const matrix = [
+        ["Discount Rate", "0.04"],
+        ["PV Cash Flow", ...pvs.map(formatMoney)],
+        ["", "Total Cash Flow by Scenario"],
+        ["Year \\ Scen", ...Array.from({ length: 25 }, (_, i) => i + 1)]
+      ];
+      for (let year = 2025; year <= 2085; year += 1) {
+        const row = [year];
+        for (let scen = 1; scen <= 25; scen += 1) {
+          const base = 545000 - Math.max(0, year - 2025) * (4200 + scen * 95);
+          row.push(formatMoney(Math.max(0, base - (scen % 7) * 28000)));
+        }
+        matrix.push(row);
+      }
+      return matrix;
+    }
+
+    function scenarioResultsMatrix() {
+      const matrix = [
+        ["Scenario", 25],
+        ["", "Cash Flow Projection by Policy"],
+        ["Year \\ Policy", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "Total"]
+      ];
+      for (let year = 2025; year <= 2085; year += 1) {
+        const values = [20000, 98000, 65000, 49000, 39000, 78000, 28000, 0, 22000, 96000]
+          .map((value, index) => Math.max(0, value - Math.max(0, year - 2025 - index) * (index + 1) * 1200));
+        matrix.push([year, ...values.map(formatMoney), formatMoney(values.reduce((sum, value) => sum + value, 0))]);
+      }
+      return matrix;
+    }
+
+    function policyResultsMatrix() {
+      const matrix = [
+        ["Policy", 10, "", "Scenario", 25],
+        ["Gender", "F", "", "Random Number", "0.5178342136"],
+        ["Benefit", "$96,000", "", "", "", "", "Cumulative Probability of"],
+        ["", "", "", "", "", "", "Survival", "Death", "Survive = 1"],
+        ["Year", "Age", "Base Qx", "Improvement", "Improved Qx", "Px", "tPx", "1 - tPx", "Dead = 0", "Total Cash Flow"]
+      ];
+      let tpx = 1;
+      for (let year = 2025; year <= 2085; year += 1) {
+        const age = year - 1957;
+        const baseQx = 0.008475 + (year - 2025) * 0.00062;
+        const improvement = Math.max(0.45, 0.84357 - (year - 2025) * 0.0102);
+        const improved = baseQx * improvement;
+        const px = 1 - improved;
+        tpx *= px;
+        const alive = tpx > 0.5178342136 ? 1 : 0;
+        matrix.push([
+          year,
+          age,
+          baseQx.toFixed(6),
+          improvement.toFixed(6),
+          improved.toFixed(6),
+          px.toFixed(6),
+          tpx.toFixed(6),
+          (1 - tpx).toFixed(6),
+          alive,
+          formatMoney(alive ? 96000 : 0)
+        ]);
+      }
+      return matrix;
+    }
+
+    const outputMatrices = {
+      total: totalResultsMatrix(),
+      scenario: scenarioResultsMatrix(),
+      policy: policyResultsMatrix()
+    };
+
+    function renderDashboardOutput() {
+      const rows = [
+        ["Discount rate", "4.00%"],
+        ["Mean", "$6,401,960"],
+        ["Median", "$6,385,137"],
+        ["Std Dev", "$746,012"],
+        ["Min", "$4,978,421"],
+        ["Max", "$7,834,172"]
+      ];
+      outputContent.innerHTML = sectionHtml(
+        "PV Cash Flow Statistics",
+        rows,
+        ["Metric", "Value"],
+        "",
+        { output: true, hideHeader: true }
+      );
+      outputFooter.textContent = "";
+    }
+
+    function renderScrollableMatrix(matrix, label, headers = null) {
+      const shownRows = matrix.slice(0, previewLimit);
+      const shownCols = Math.min(Math.max(...matrix.map((row) => row.length)), previewLimit);
+      const tableHeaders = headers || columnLetters(shownCols);
+      const rows = shownRows.map((row) => Array.from({ length: shownCols }, (_, index) => row[index] ?? ""));
+
+      const moreRows = matrix.length > previewLimit;
+      const moreCols = Math.max(...matrix.map((row) => row.length)) > previewLimit;
+      outputFooter.textContent = moreRows || moreCols
+        ? `Showing first ${Math.min(matrix.length, previewLimit)} rows x ${shownCols} columns from ${label}. More data is in the output workbook.`
+        : `Showing all ${matrix.length} rows x ${shownCols} columns from ${label}`;
+      return tableHtml(tableHeaders, rows, { sticky: true, label });
+    }
+
+    function renderTotalOutput() {
+      const matrix = outputMatrices.total.slice(4);
+      const headers = ["Year \\ Scen", ...Array.from({ length: 25 }, (_, index) => index + 1)];
+      const pvRow = outputMatrices.total[1].slice(1);
+      outputContent.innerHTML = `
+        <section class="output-section">
+          <div class="section-title">
+            <span>Discount Rate</span>
+            <span>4.00%</span>
+          </div>
+        </section>
+        <section class="output-section">
+          <div class="section-title">
+            <span>PV Cash Flow</span>
+          </div>
+          ${tableHtml(Array.from({ length: pvRow.length }, (_, index) => `Scenario ${index + 1}`), [pvRow], { label: "PV Cash Flow" })}
+        </section>
+        <section class="output-section">
+          <div class="section-title">
+            <span>Total Cash Flow by Scenario</span>
+          </div>
+          ${renderScrollableMatrix(matrix, "Total Results", headers)}
+        </section>
+      `;
+    }
+
+    function renderScenarioOutput() {
+      const matrix = outputMatrices.scenario.slice(3);
+      const headers = ["Year \\ Policy", ...Array.from({ length: 10 }, (_, index) => index + 1), "Total"];
+      outputContent.innerHTML = `
+        <section class="output-section">
+          <div class="section-title">
+            <span>Scenario</span>
+            <span>25</span>
+          </div>
+        </section>
+        <section class="output-section">
+          <div class="section-title">
+            <span>Cash Flow Projection by Policy</span>
+          </div>
+          ${renderScrollableMatrix(matrix, "Scenario Results", headers)}
+        </section>
+      `;
+    }
+
+    function renderPolicyOutput() {
+      const matrix = outputMatrices.policy.slice(5);
+      const headers = ["Year", "Age", "Base Qx", "Improvement", "Improved Qx", "Px", "tPx", "1 - tPx", "Dead = 0", "Total Cash Flow"];
+      outputContent.innerHTML = `
+        <section class="output-section">
+          <div class="section-title">
+            <span>Policy Inputs</span>
+          </div>
+          ${tableHtml(["Field", "Value", "Field", "Value"], [
+            ["Policy", "10", "Scenario", "25"],
+            ["Gender", "F", "Random Number", "0.5178342136"],
+            ["Benefit", "$96,000", "", ""]
+          ], { hideHeader: true, label: "Policy Inputs" })}
+        </section>
+        <section class="output-section">
+          <div class="section-title">
+            <span>Policy Calculations</span>
+          </div>
+          ${renderScrollableMatrix(matrix, "Policy Results", headers)}
+        </section>
+      `;
+    }
+
+    function renderOutput(name) {
+      activeOutput = name;
+      outputTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.output === name));
+      if (name === "dashboard") renderDashboardOutput();
+      if (name === "total") renderTotalOutput();
+      if (name === "scenario") renderScenarioOutput();
+      if (name === "policy") renderPolicyOutput();
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => showScreen(tab.dataset.screen));
+    });
+
+    sheetTabs.forEach((tab) => {
+      tab.addEventListener("click", () => renderSheet(tab.dataset.sheet));
+    });
+
+    outputTabs.forEach((tab) => {
+      tab.addEventListener("click", () => renderOutput(tab.dataset.output));
+    });
+
+    sheetContent.addEventListener("input", (event) => {
+      if (event.target.matches("[data-editable='true']")) setDirty(true);
+    });
+
+    sheetContent.addEventListener("change", (event) => {
+      if (event.target.matches("[data-editable='true']")) setDirty(true);
+    });
+
+    saveWorkbookButton.addEventListener("click", () => {
+      setDirty(false);
+      statusText.textContent = "Workbook edits saved";
+    });
+
+    document.getElementById("browseButton").addEventListener("click", () => fileInput.click());
+    document.getElementById("clearButton").addEventListener("click", () => {
+      filePath.value = "";
+      statusText.textContent = "No workbook selected";
+      runStatus.textContent = "Waiting";
+    });
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      filePath.value = file.name;
+      updateWorkbookProfile(file.name);
+      statusText.textContent = "Workbook selected";
+      runStatus.textContent = "Ready";
+    });
+
+    runButton.addEventListener("click", () => {
+      runStatus.textContent = "Running";
+      statusText.textContent = "Running model";
+      showScreen("outputs-screen");
+
+      window.setTimeout(() => {
+        runStatus.textContent = "Complete";
+        statusText.textContent = "Run complete";
+      }, 700);
+    });
+
+    renderSheet("inforce");
+    renderOutput("dashboard");
+  </script>
+</body>
+</html>
