@@ -13,3 +13,4 @@ site/
 .mypy_cache/
 .coverage
 htmlcov/
+.gstack/

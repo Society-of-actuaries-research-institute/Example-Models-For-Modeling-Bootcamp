@@ -32,7 +32,25 @@
       "Bash(.venv/Scripts/python -m pytest tests/ -m \"not slow\" --no-cov -q)",
       "Bash(.venv/Scripts/python -m pytest tests/engine/test_projection.py::test_project_from_table_peak_memory -v --no-cov -s)",
       "Bash(.venv/Scripts/python -m pytest -m \"not slow\" --no-cov -q)",
-      "Bash(.venv/Scripts/python -c ' *)"
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(python -m pytest tests/ -x -q)",
+      "Bash(python -m pytest tests/ -x -q -p no:cacheprovider)",
+      "Bash(python -m pytest tests/ -x -q --no-header --override-ini=\"addopts=\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(python -m pip install -e . -q)",
+      "Bash(python -c \"import mbc_model; print\\('ok'\\)\")",
+      "Bash(python -m pytest tests/ -x -q --no-header --override-ini=\"addopts=\" --timeout=120)",
+      "Bash(python -m pytest tests/data/test_loader.py -v --no-header --override-ini=\"addopts=\")",
+      "Bash(python -c \"from pathlib import Path; p = Path\\('c:/Users/iniki/MBC_Production_Model_Example/tests/data/test_loader.py'\\).parent.parent.parent / 'inputs' / 'Input 10 pol 25 scen seed.xlsm'; print\\(p\\); print\\(p.exists\\(\\)\\)\")",
+      "Bash(python -m pytest tests/data/test_loader.py::test_load_parameters_seed_flag_returns_no_random_table -v --no-header --override-ini=\"addopts=\")",
+      "Bash(python -c ' *)",
+      "Bash(python -m pytest tests/reporting/test_writer.py -v --no-header --override-ini=\"addopts=\")",
+      "Bash(python -m pytest tests/reporting/test_writer.py -q --no-header --override-ini=\"addopts=\")",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(findstr /i \"mkdocs\\\\|sphinx\\\\|docs\\\\|pdoc\")",
+      "Bash(.venv/Scripts/python -m mkdocs --version)",
+      "Bash(.venv/Scripts/python -c \"import mkdocstrings; print\\('installed'\\)\")"
     ]
   }
 }
