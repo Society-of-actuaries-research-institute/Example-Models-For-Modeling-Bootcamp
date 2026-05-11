@@ -14,6 +14,13 @@ from typing import Any
 import openpyxl
 
 from mbc_model.data.loader import ExcelLoader
+from mbc_model.data.models import ModelResults
+from mbc_model.reporting.charts import (
+    GRAPH_NOT_REQUESTED_MESSAGE,
+    figure_to_data_url,
+    make_dashboard_cash_flow_chart,
+    make_scenario_cash_flows_chart,
+)
 
 PREVIEW_LIMIT = 100
 
@@ -185,18 +192,33 @@ def build_input_preview(path: Path, limit: int = PREVIEW_LIMIT) -> dict[str, Any
     }
 
 
-def build_output_preview(path: Path, limit: int = PREVIEW_LIMIT) -> dict[str, Any]:
+def build_output_preview(
+    path: Path,
+    results: ModelResults | None = None,
+    limit: int = PREVIEW_LIMIT,
+) -> dict[str, Any]:
     """Return a bounded, JSON-ready preview of a model output workbook."""
     path = path.resolve()
     workbook = openpyxl.load_workbook(path, data_only=True)
+    dashboard = _parse_dashboard(workbook)
+    total = _parse_total(workbook, limit)
+    scenario = _parse_scenario(workbook, limit)
+    policy = _parse_policy(workbook, limit)
+
+    if results is not None:
+        dashboard["chart"] = _dashboard_chart_payload(results)
+        scenario["chart"] = _scenario_chart_payload(results)
+    else:
+        dashboard["chart"] = _chart_unavailable("Run the model to display this graph.")
+        scenario["chart"] = _chart_unavailable("Run the model to display this graph.")
 
     return {
         "path": str(path),
         "file_name": path.name,
-        "dashboard": _parse_dashboard(workbook),
-        "total": _parse_total(workbook, limit),
-        "scenario": _parse_scenario(workbook, limit),
-        "policy": _parse_policy(workbook, limit),
+        "dashboard": dashboard,
+        "total": total,
+        "scenario": scenario,
+        "policy": policy,
     }
 
 
@@ -299,6 +321,32 @@ def _parse_policy(workbook: openpyxl.Workbook, limit: int) -> dict[str, Any]:
             else _empty_table()
         ),
     }
+
+
+def _scenario_chart_payload(results: ModelResults) -> dict[str, Any]:
+    title = f"Scenario {results.config.scenario_id} Cash Flows by Policy"
+    if not results.config.create_scenario_graph:
+        return _chart_unavailable(GRAPH_NOT_REQUESTED_MESSAGE, title)
+
+    figure = make_scenario_cash_flows_chart(results)
+    if figure is None:
+        return _chart_unavailable("Graph data is not available.", title)
+    return {"available": True, "title": title, "data_url": figure_to_data_url(figure)}
+
+
+def _dashboard_chart_payload(results: ModelResults) -> dict[str, Any]:
+    title = "Cash Flow Projection by Scenario"
+    if not results.config.create_dashboard_graph:
+        return _chart_unavailable(GRAPH_NOT_REQUESTED_MESSAGE, title)
+
+    figure = make_dashboard_cash_flow_chart(results)
+    if figure is None:
+        return _chart_unavailable("Graph data is not available.", title)
+    return {"available": True, "title": title, "data_url": figure_to_data_url(figure)}
+
+
+def _chart_unavailable(message: str, title: str = "") -> dict[str, Any]:
+    return {"available": False, "title": title, "message": message}
 
 
 def _read_table(

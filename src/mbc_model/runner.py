@@ -46,6 +46,16 @@ def run(
     Returns:
         Absolute path to the written workbook.
     """
+    output_path, _ = run_with_results(input_path, output_dir=output_dir, verbose=verbose)
+    return output_path
+
+
+def run_with_results(
+    input_path: Path,
+    output_dir: Path = Path("outputs"),
+    verbose: bool = True,
+) -> tuple[Path, ModelResults]:
+    """Execute a complete model run and return the workbook path plus results."""
     # ------------------------------------------------------------------ inputs
     if verbose:
         print("Loading inputs...", flush=True)
@@ -59,9 +69,7 @@ def run(
     # Load scalar parameters, the mortality table, and (optionally) the random
     # number table from the Parameters sheet.
     # random_number_table is None when "Which Random Numbers?" = "Seed".
-    model_parameters, mortality_table, random_number_table = (
-        excel_loader.load_parameters()
-    )
+    model_parameters, mortality_table, random_number_table = excel_loader.load_parameters()
 
     # Load output settings (which tabs to create, discount rate, etc.)
     reporting_config = excel_loader.load_reporting()
@@ -179,18 +187,16 @@ def run(
 
         if random_number_table is not None:
             # Use the pre-loaded random number row for this scenario
-            random_numbers_for_scenario: np.ndarray = random_number_table[
-                scenario_index, :
-            ]
+            random_numbers_for_scenario: np.ndarray = random_number_table[scenario_index, :]
         else:
             # Re-derive the exact random numbers that were used in the projection
             # for this scenario, using the same per-policy seeded RNG streams
             random_numbers_for_scenario = np.array(
                 [
                     float(
-                        np.random.default_rng(
-                            model_parameters.random_seed + policy_index
-                        ).random(scenario_index + 1)[-1]
+                        np.random.default_rng(model_parameters.random_seed + policy_index).random(
+                            scenario_index + 1
+                        )[-1]
                     )
                     for policy_index in range(len(inforce_policies))
                 ],
@@ -273,4 +279,4 @@ def run(
         print(f"done ({time.perf_counter() - step_start_time:.1f}s)")
         print(f"Total runtime: {total_runtime_seconds:.1f}s")
 
-    return output_path
+    return output_path, model_results

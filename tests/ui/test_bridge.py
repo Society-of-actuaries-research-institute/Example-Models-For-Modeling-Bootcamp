@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from mbc_model.runner import run
+from mbc_model.runner import run_with_results
 from mbc_model.ui.bridge import DesktopBridge
 
 _ROOT = Path(__file__).parent.parent.parent
@@ -29,8 +29,8 @@ def test_bridge_get_input_preview_returns_payload() -> None:
 
 @pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
 def test_bridge_start_run_updates_status_with_output(tmp_path: Path) -> None:
-    output_path = run(_SMALL_SEED, output_dir=tmp_path, verbose=False)
-    bridge = DesktopBridge(project_root=_ROOT, runner=lambda _path: output_path)
+    output_path, results = run_with_results(_SMALL_SEED, output_dir=tmp_path, verbose=False)
+    bridge = DesktopBridge(project_root=_ROOT, runner=lambda _path: (output_path, results))
 
     response = bridge.start_run(str(_SMALL_SEED))
     assert response["ok"]
@@ -44,6 +44,8 @@ def test_bridge_start_run_updates_status_with_output(tmp_path: Path) -> None:
     assert status["status"] == "Complete"
     assert status["output_path"] == str(output_path)
     assert status["output"]["dashboard"]["available"]
+    assert status["output"]["dashboard"]["chart"]["available"]
+    assert status["output"]["scenario"]["chart"]["available"]
     assert status["log"][0]["status"] == "Complete"
 
 

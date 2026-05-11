@@ -11,7 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from mbc_model.runner import run
+from mbc_model.data.models import ModelResults
+from mbc_model.runner import run_with_results
 from mbc_model.ui.preview import build_input_preview, build_output_preview
 
 
@@ -21,7 +22,7 @@ class DesktopBridge:
     def __init__(
         self,
         project_root: Path | None = None,
-        runner: Callable[[Path], Path] | None = None,
+        runner: Callable[[Path], Path | tuple[Path, ModelResults]] | None = None,
     ) -> None:
         self._project_root = (project_root or Path.cwd()).resolve()
         self._runner = runner
@@ -146,12 +147,18 @@ class DesktopBridge:
 
     def _run_model(self, input_path: Path) -> None:
         try:
-            output_path = (
-                self._runner(input_path)
-                if self._runner is not None
-                else run(input_path, output_dir=self._project_root / "outputs", verbose=False)
-            )
-            output_preview = build_output_preview(output_path)
+            if self._runner is not None:
+                runner_result = self._runner(input_path)
+                if isinstance(runner_result, tuple):
+                    output_path, model_results = runner_result
+                else:
+                    output_path = runner_result
+                    model_results = None
+            else:
+                output_path, model_results = run_with_results(
+                    input_path, output_dir=self._project_root / "outputs", verbose=False
+                )
+            output_preview = build_output_preview(output_path, model_results)
         except Exception as exc:
             with self._lock:
                 self._state.update(

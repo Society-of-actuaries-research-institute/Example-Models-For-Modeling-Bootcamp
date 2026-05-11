@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import base64
+import os
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
-from mbc_model.runner import run
+from mbc_model.data.models import ModelResults
+from mbc_model.reporting.charts import GRAPH_NOT_REQUESTED_MESSAGE
+from mbc_model.runner import run, run_with_results
 from mbc_model.ui.preview import PREVIEW_LIMIT, build_input_preview, build_output_preview
 
 _ROOT = Path(__file__).parent.parent.parent
@@ -51,3 +56,67 @@ def test_output_preview_reads_small_run_results(tmp_path: Path) -> None:
     assert preview["policy"]["available"]
     assert preview["dashboard"]["rows"][0] == ["Discount rate", "4.00%"]
     assert preview["total"]["cash_flow"]["shown_rows"] <= PREVIEW_LIMIT
+
+
+@pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
+def test_output_preview_includes_real_chart_data_urls(tmp_path: Path) -> None:
+    output_path, results = run_with_results(_SMALL_SEED, output_dir=tmp_path, verbose=False)
+
+    preview = build_output_preview(output_path, results)
+
+    _assert_png_data_url(preview["scenario"]["chart"]["data_url"])
+    _assert_png_data_url(preview["dashboard"]["chart"]["data_url"])
+    assert preview["scenario"]["chart"]["title"] == "Scenario 25 Cash Flows by Policy"
+    assert preview["dashboard"]["chart"]["title"] == "Cash Flow Projection by Scenario"
+
+
+@pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
+def test_output_preview_says_when_graphs_were_not_requested(tmp_path: Path) -> None:
+    output_path, results = run_with_results(_SMALL_SEED, output_dir=tmp_path, verbose=False)
+    disabled_results = _with_graph_flags(results, scenario=False, dashboard=False)
+
+    preview = build_output_preview(output_path, disabled_results)
+
+    assert not preview["scenario"]["chart"]["available"]
+    assert not preview["dashboard"]["chart"]["available"]
+    assert preview["scenario"]["chart"]["message"] == GRAPH_NOT_REQUESTED_MESSAGE
+    assert preview["dashboard"]["chart"]["message"] == GRAPH_NOT_REQUESTED_MESSAGE
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(
+    os.getenv("RUN_SLOW_UI_TESTS") != "1",
+    reason="Set RUN_SLOW_UI_TESTS=1 to run the 50k policy acceptance test.",
+)
+@pytest.mark.skipif(not _LARGE_SEED.exists(), reason=f"Fixture workbook not found: {_LARGE_SEED}")
+def test_large_seed_workbook_graph_payload_acceptance(tmp_path: Path) -> None:
+    output_path, results = run_with_results(_LARGE_SEED, output_dir=tmp_path, verbose=False)
+
+    preview = build_output_preview(output_path, results)
+
+    _assert_png_data_url(preview["scenario"]["chart"]["data_url"])
+    _assert_png_data_url(preview["dashboard"]["chart"]["data_url"])
+    assert preview["total"]["cash_flow"]["shown_rows"] <= PREVIEW_LIMIT
+
+
+def _with_graph_flags(
+    results: ModelResults,
+    scenario: bool,
+    dashboard: bool,
+) -> ModelResults:
+    return replace(
+        results,
+        config=replace(
+            results.config,
+            create_scenario_graph=scenario,
+            create_dashboard_graph=dashboard,
+        ),
+    )
+
+
+def _assert_png_data_url(data_url: str) -> None:
+    prefix = "data:image/png;base64,"
+    assert data_url.startswith(prefix)
+    image_bytes = base64.b64decode(data_url.removeprefix(prefix))
+    assert image_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    assert len(image_bytes) > 1000

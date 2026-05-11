@@ -548,6 +548,14 @@
       overflow: hidden;
     }
 
+    .chart img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #ffffff;
+    }
+
     .stacked-chart {
       padding: 18px 16px 28px;
     }
@@ -1883,68 +1891,28 @@
 
       function renderScenarioChart() {
         const scenario = outputPreview && outputPreview.scenario;
-        if (!scenario || !scenario.available || !scenario.cash_flow.rows.length) {
-          scenarioChart.innerHTML = emptyState("Run the model to draw scenario cash flows.");
+        const chart = scenario && scenario.chart;
+        if (!chart || !chart.available) {
+          scenarioChart.innerHTML = emptyState(chart && chart.message ? chart.message : "Run the model to draw scenario cash flows.");
           scenarioChartNote.textContent = "";
           return;
         }
-        const rows = scenario.cash_flow.rows.slice(0, 8);
-        const headers = scenario.cash_flow.headers;
-        const totalColumn = headers.findIndex((header) => String(header).toLowerCase() === "total");
-        const policyColumns = headers
-          .map((header, index) => ({ header, index }))
-          .filter((item) => item.index > 0 && item.index !== totalColumn)
-          .slice(0, 4);
-        const totals = rows.map((row) => parseMoney(row[totalColumn > -1 ? totalColumn : row.length - 1]));
-        const maxTotal = Math.max(...totals, 1);
-
-        scenarioChartTitle.textContent = `Scenario ${scenario.scenario} Cash Flows by Policy`;
-        scenarioChart.innerHTML = `
-          <div class="stacked-bars" aria-hidden="true">
-            ${rows.map((row, rowIndex) => {
-              const total = totals[rowIndex] || 1;
-              const shares = policyColumns.map((column) => {
-                const value = parseMoney(row[column.index]);
-                return Math.max(1, Math.round((value / total) * 100));
-              });
-              while (shares.length < 4) shares.push(1);
-              const height = Math.max(10, Math.round((total / maxTotal) * 86));
-              return `
-                <div class="stacked-column" style="--h: ${height}%; --a: ${shares[0]}fr; --b: ${shares[1]}fr; --c: ${shares[2]}fr; --d: ${shares[3]}fr;" data-label="${escapeHtml(row[0])}">
-                  <span></span><span></span><span></span><span></span>
-                </div>
-              `;
-            }).join("")}
-          </div>
-          <svg class="total-line" viewBox="0 0 620 232" aria-hidden="true">
-            <polyline points="${svgPointSeries(rows, totalColumn > -1 ? totalColumn : rows[0].length - 1, 620, 232, 38)}" fill="none" stroke="#111" stroke-width="3" stroke-dasharray="8 5"></polyline>
-          </svg>
-        `;
-        scenarioChartNote.textContent = "Stacked policy cash flows by year with a dashed Total line.";
+        scenarioChartTitle.textContent = chart.title || `Scenario ${scenario.scenario} Cash Flows by Policy`;
+        scenarioChart.innerHTML = `<img src="${escapeHtml(chart.data_url)}" alt="${escapeHtml(chart.title || "Scenario cash flows by policy")}">`;
+        scenarioChartNote.textContent = "";
       }
 
       function renderTotalChart() {
-        const total = outputPreview && outputPreview.total;
-        if (!total || !total.available || !total.cash_flow.rows.length) {
+        const dashboard = outputPreview && outputPreview.dashboard;
+        const chart = dashboard && dashboard.chart;
+        if (!chart || !chart.available) {
           totalChart.innerHTML = emptyState("Run the model to draw cash flow projections.");
+          if (chart && chart.message) totalChart.innerHTML = emptyState(chart.message);
           totalChartNote.textContent = "";
           return;
         }
-        const rows = total.cash_flow.rows.slice(0, 12);
-        const colors = ["#0f6b5f", "#8a3356", "#b56211", "#49617a"];
-        const scenarioColumns = total.cash_flow.headers
-          .map((header, index) => ({ header, index }))
-          .filter((item) => item.index > 0)
-          .slice(0, 4);
-        totalChart.innerHTML = `
-          <svg viewBox="0 0 620 232" role="img" aria-labelledby="lineChartTitle">
-            <title id="lineChartTitle">Cash flow projection by scenario</title>
-            ${scenarioColumns.map((column, index) => `
-              <polyline points="${svgPointSeries(rows, column.index, 620, 232, 30)}" fill="none" stroke="${colors[index % colors.length]}" stroke-width="${index === 0 ? 4 : 3}"></polyline>
-            `).join("")}
-          </svg>
-        `;
-        totalChartNote.textContent = "Representative scenarios across projection years.";
+        totalChart.innerHTML = `<img src="${escapeHtml(chart.data_url)}" alt="${escapeHtml(chart.title || "Cash flow projection by scenario")}">`;
+        totalChartNote.textContent = "";
       }
 
       function renderCharts() {
