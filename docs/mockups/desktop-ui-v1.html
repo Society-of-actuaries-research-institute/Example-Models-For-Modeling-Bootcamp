@@ -791,12 +791,12 @@
                 </div>
                 <div class="metric">
                   <div class="label">Projection</div>
-                  <div class="value">2025-2085</div>
-                  <div class="subvalue">61 years</div>
+                  <div class="value" id="projectionRange">2025-2085</div>
+                  <div class="subvalue" id="projectionYears">61 years</div>
                 </div>
                 <div class="metric">
                   <div class="label">Discount Rate</div>
-                  <div class="value">4.00%</div>
+                  <div class="value" id="discountRate">4.00%</div>
                 </div>
                 <div class="metric">
                   <div class="label">Random Numbers</div>
@@ -840,17 +840,17 @@
             <div class="run-card">
               <div class="label">Output File</div>
               <div class="file-row">
-                <div class="value file-name">results_20260427_145519.xlsx</div>
-                <a class="btn" href="../../outputs/results_20260427_145519.xlsx">Open</a>
+                <div class="value file-name" id="outputFileName">No output yet</div>
+                <button class="btn" type="button" id="openOutputButton" disabled>Open</button>
               </div>
             </div>
             <div class="run-card">
               <div class="label">Policies Projected</div>
-              <div class="value">10</div>
+              <div class="value" id="policiesProjected">10</div>
             </div>
             <div class="run-card">
               <div class="label">Scenarios Projected</div>
-              <div class="value">25</div>
+              <div class="value" id="scenariosProjected">25</div>
             </div>
           </section>
 
@@ -874,10 +874,10 @@
             <div class="stack">
               <section class="panel chart-panel">
                 <div class="panel-header">
-                  <h3>Scenario 25 Cash Flows by Policy</h3>
+                  <h3 id="scenarioChartTitle">Scenario 25 Cash Flows by Policy</h3>
                 </div>
                 <div class="panel-body">
-                  <div class="chart stacked-chart" aria-label="Scenario 25 cash flows by policy">
+                  <div class="chart stacked-chart" id="scenarioChart" aria-label="Scenario cash flows by policy">
                     <div class="stacked-bars" aria-hidden="true">
                       <div class="stacked-column" style="--h: 82%; --a: 18fr; --b: 30fr; --c: 24fr; --d: 28fr;" data-label="2025"><span></span><span></span><span></span><span></span></div>
                       <div class="stacked-column" style="--h: 82%; --a: 17fr; --b: 30fr; --c: 24fr; --d: 29fr;" data-label="2026"><span></span><span></span><span></span><span></span></div>
@@ -902,7 +902,7 @@
                       </g>
                     </svg>
                   </div>
-                  <div class="chart-note">Stacked policy cash flows by year with a dashed Total line.</div>
+                  <div class="chart-note" id="scenarioChartNote">Stacked policy cash flows by year with a dashed Total line.</div>
                 </div>
               </section>
 
@@ -911,7 +911,7 @@
                   <h3>Cash Flow Projection by Scenario</h3>
                 </div>
                 <div class="panel-body">
-                  <div class="chart line-chart" aria-label="Scenario cash flow line chart">
+                  <div class="chart line-chart" id="totalChart" aria-label="Scenario cash flow line chart">
                     <svg viewBox="0 0 620 232" role="img" aria-labelledby="lineChartTitle">
                       <title id="lineChartTitle">Cash flow projection by year</title>
                       <polyline points="30,176 88,152 146,128 204,111 262,104 320,96 378,91 436,88 494,93 552,108 590,126" fill="none" stroke="#0f6b5f" stroke-width="4"></polyline>
@@ -925,7 +925,7 @@
                       </g>
                     </svg>
                   </div>
-                  <div class="chart-note">Representative scenarios across projection years.</div>
+                  <div class="chart-note" id="totalChartNote">Representative scenarios across projection years.</div>
                 </div>
               </section>
             </div>
@@ -948,32 +948,47 @@
                       <th>Time</th>
                       <th>User</th>
                       <th>Action</th>
+                      <th>Input File</th>
+                      <th>Output File</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody id="runLogBody">
                     <tr>
                       <td>2026-05-06</td>
                       <td class="time">10:42:11</td>
                       <td>iniki</td>
                       <td>Loaded workbook inputs/Interface_Example_v4.xlsm</td>
+                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td></td>
+                      <td>Ready</td>
                     </tr>
                     <tr>
                       <td>2026-05-06</td>
                       <td class="time">10:42:12</td>
                       <td>iniki</td>
                       <td>Computed cumulative survival matrix</td>
+                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td></td>
+                      <td>Running</td>
                     </tr>
                     <tr>
                       <td>2026-05-06</td>
                       <td class="time">10:42:13</td>
                       <td>iniki</td>
                       <td>Projected 10 policies across 25 scenarios</td>
+                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td></td>
+                      <td>Running</td>
                     </tr>
                     <tr>
                       <td>2026-05-06</td>
                       <td class="time">10:42:14</td>
                       <td>iniki</td>
                       <td>Wrote output workbook and refreshed output tables</td>
+                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td>results_20260427_145519.xlsx</td>
+                      <td>Complete</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1507,6 +1522,597 @@
 
     renderSheet("inforce");
     renderOutput("dashboard");
+  </script>
+
+  <script>
+    (() => {
+      const previewLimit = 100;
+      const tabs = Array.from(document.querySelectorAll(".tab"));
+      const screens = Array.from(document.querySelectorAll(".screen"));
+      const sheetTabs = Array.from(document.querySelectorAll(".preview-tab"));
+      const outputTabs = Array.from(document.querySelectorAll(".output-tab"));
+      const filePath = document.getElementById("filePath");
+      const statusText = document.getElementById("statusText");
+      const runButton = document.getElementById("runButton");
+      const runStatus = document.getElementById("runStatus");
+      const runtime = document.getElementById("runtime");
+      const sheetTitle = document.getElementById("sheetTitle");
+      const sheetContent = document.getElementById("sheetContent");
+      const sheetFooter = document.getElementById("sheetFooter");
+      const saveWorkbookButton = document.getElementById("saveWorkbookButton");
+      const outputContent = document.getElementById("outputContent");
+      const outputFooter = document.getElementById("outputFooter");
+      const outputFileName = document.getElementById("outputFileName");
+      const openOutputButton = document.getElementById("openOutputButton");
+      const policiesProjected = document.getElementById("policiesProjected");
+      const scenariosProjected = document.getElementById("scenariosProjected");
+      const runLogBody = document.getElementById("runLogBody");
+      const scenarioChart = document.getElementById("scenarioChart");
+      const totalChart = document.getElementById("totalChart");
+      const scenarioChartTitle = document.getElementById("scenarioChartTitle");
+      const scenarioChartNote = document.getElementById("scenarioChartNote");
+      const totalChartNote = document.getElementById("totalChartNote");
+
+      let activeSheet = "inforce";
+      let activeOutput = "dashboard";
+      let workbookPreview = null;
+      let outputPreview = null;
+      let currentInputPath = filePath.value;
+      let pollTimer = null;
+
+      function api() {
+        return window.pywebview && window.pywebview.api ? window.pywebview.api : null;
+      }
+
+      function bridgeReady() {
+        return Boolean(api());
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function formatInteger(value) {
+        return Number(value || 0).toLocaleString("en-US");
+      }
+
+      function formatPercent(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number.toLocaleString("en-US", {
+          style: "percent",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) : String(value ?? "");
+      }
+
+      function formatInputCell(header, value) {
+        if (header === "Annual Benefit" && typeof value === "number") {
+          return "$" + Math.round(value).toLocaleString("en-US");
+        }
+        if ((header === "Male" || header === "Female") && typeof value === "number") {
+          return value.toFixed(6);
+        }
+        if (header === "Discount Rate" && typeof value === "number") {
+          return formatPercent(value);
+        }
+        return value;
+      }
+
+      function showScreen(screenId) {
+        tabs.forEach((tab) => {
+          const isActive = tab.dataset.screen === screenId;
+          tab.setAttribute("aria-selected", String(isActive));
+        });
+        screens.forEach((screen) => {
+          screen.classList.toggle("active", screen.id === screenId);
+        });
+      }
+
+      function tableHtml(headers, rows, options = {}) {
+        const classes = options.sticky ? "table-wrap sticky-table" : "table-wrap";
+        const headerHtml = headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("");
+        const rowHtml = rows.map((row) => {
+          const cells = row.map((cell, index) => {
+            const header = headers[index] || "";
+            return `<td>${escapeHtml(options.formatter ? options.formatter(header, cell) : cell)}</td>`;
+          }).join("");
+          return `<tr>${cells}</tr>`;
+        }).join("");
+        const headHtml = options.hideHeader ? "" : `<thead><tr>${headerHtml}</tr></thead>`;
+        return `
+          <div class="${classes}">
+            <table aria-label="${escapeHtml(options.label || "Table preview")}">
+              ${headHtml}
+              <tbody>${rowHtml}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function emptyState(message) {
+        return `<div class="empty-state">${escapeHtml(message)}</div>`;
+      }
+
+      function tablePayloadHtml(payload, label, options = {}) {
+        if (!payload || !payload.headers || !payload.headers.length) {
+          return emptyState(`${label} is not available.`);
+        }
+        return tableHtml(payload.headers, payload.rows || [], {
+          sticky: options.sticky !== false,
+          hideHeader: options.hideHeader,
+          label,
+          formatter: options.formatter
+        });
+      }
+
+      function sectionHtml(title, payload, options = {}) {
+        return `
+          <section class="${options.output ? "output-section" : "sheet-section"}">
+            <div class="section-title">
+              <span>${escapeHtml(title)}</span>
+            </div>
+            ${tablePayloadHtml(payload, title, options)}
+          </section>
+        `;
+      }
+
+      function footerFor(payload, label, location) {
+        if (!payload) return "";
+        if (payload.has_more_rows || payload.has_more_columns) {
+          return `Showing first ${payload.shown_rows} rows x ${payload.shown_columns} columns from ${label}. More data is in the ${location}.`;
+        }
+        return `Showing all ${payload.total_rows} rows x ${payload.total_columns} columns from ${label}.`;
+      }
+
+      function setDirty(isDirty) {
+        saveWorkbookButton.disabled = true;
+        saveWorkbookButton.classList.remove("dirty");
+        if (isDirty) {
+          statusText.textContent = "Workbook editing is not enabled in this desktop preview";
+        }
+      }
+
+      function applyInputPreview(preview) {
+        workbookPreview = preview;
+        currentInputPath = preview.path;
+        filePath.value = preview.path;
+        document.getElementById("policyCount").textContent = formatInteger(preview.policy_count);
+        document.getElementById("scenarioCount").textContent = formatInteger(preview.scenario_count);
+        document.getElementById("projectionRange").textContent = `${preview.projection_start}-${preview.projection_end}`;
+        document.getElementById("projectionYears").textContent = `${preview.projection_years} years`;
+        document.getElementById("discountRate").textContent = formatPercent(preview.discount_rate);
+        document.getElementById("randomNumbersSetting").textContent = preview.random_numbers;
+        policiesProjected.textContent = formatInteger(preview.policy_count);
+        scenariosProjected.textContent = formatInteger(preview.scenario_count);
+        statusText.textContent = "Workbook selected";
+        runStatus.textContent = "Ready";
+        renderSheet(activeSheet);
+      }
+
+      function renderInforce() {
+        if (!workbookPreview) {
+          sheetTitle.textContent = "Inforce Preview";
+          sheetContent.innerHTML = emptyState("Select an input workbook to preview policies.");
+          sheetFooter.textContent = "";
+          return;
+        }
+        const payload = workbookPreview.inforce;
+        sheetTitle.textContent = payload.total_rows <= previewLimit ? "Inforce Editor" : "Inforce Preview";
+        sheetContent.innerHTML = tablePayloadHtml(payload, "Inforce", {
+          formatter: formatInputCell
+        });
+        sheetFooter.textContent = payload.has_more_rows
+          ? `Showing first ${payload.shown_rows} of ${payload.total_rows.toLocaleString("en-US")} policies. More policies are in the workbook.`
+          : `Showing all ${payload.total_rows.toLocaleString("en-US")} policies.`;
+        setDirty(false);
+      }
+
+      function renderParameters() {
+        if (!workbookPreview) {
+          sheetTitle.textContent = "Parameters Editor";
+          sheetContent.innerHTML = emptyState("Select an input workbook to preview parameters.");
+          sheetFooter.textContent = "";
+          return;
+        }
+        const parameters = workbookPreview.parameters;
+        sheetTitle.textContent = "Parameters Editor";
+        sheetContent.innerHTML = [
+          sectionHtml("Projection Settings", parameters.projection_settings, {
+            hideHeader: true,
+            sticky: false,
+            formatter: formatInputCell
+          }),
+          sectionHtml("Mortality Rates", parameters.mortality_rates, {
+            formatter: formatInputCell
+          }),
+          sectionHtml("Projection Scale", parameters.projection_scale, {
+            formatter: formatInputCell
+          }),
+          sectionHtml("Random Numbers", parameters.random_numbers, {
+            formatter: formatInputCell
+          })
+        ].join("");
+        sheetFooter.textContent = parameters.random_numbers.has_more_rows || parameters.random_numbers.has_more_columns
+          ? footerFor(parameters.random_numbers, "Random Numbers", "workbook")
+          : "";
+        setDirty(false);
+      }
+
+      function renderReporting() {
+        if (!workbookPreview) {
+          sheetTitle.textContent = "Reporting Editor";
+          sheetContent.innerHTML = emptyState("Select an input workbook to preview reporting settings.");
+          sheetFooter.textContent = "";
+          return;
+        }
+        sheetTitle.textContent = "Reporting Editor";
+        sheetContent.innerHTML = workbookPreview.reporting.sections.map((section) => (
+          sectionHtml(section.title, {
+            headers: section.headers,
+            rows: section.rows,
+            total_rows: section.rows.length,
+            total_columns: section.headers.length
+          }, {
+            hideHeader: true,
+            sticky: false,
+            formatter: formatInputCell
+          })
+        )).join("");
+        sheetFooter.textContent = "";
+        setDirty(false);
+      }
+
+      function renderSheet(sheet) {
+        activeSheet = sheet;
+        sheetTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.sheet === sheet));
+        if (sheet === "parameters") renderParameters();
+        else if (sheet === "reporting") renderReporting();
+        else renderInforce();
+      }
+
+      function applyOutputPreview(preview) {
+        outputPreview = preview;
+        outputFileName.textContent = preview.file_name || "Output workbook";
+        openOutputButton.disabled = false;
+        renderOutput(activeOutput);
+        renderCharts();
+      }
+
+      function renderDashboardOutput() {
+        const dashboard = outputPreview && outputPreview.dashboard;
+        if (!dashboard || !dashboard.available) {
+          outputContent.innerHTML = emptyState("Run the model to populate Dashboard Results.");
+          outputFooter.textContent = "";
+          return;
+        }
+        outputContent.innerHTML = sectionHtml("PV Cash Flow Statistics", {
+          headers: ["Metric", "Value"],
+          rows: dashboard.rows,
+          total_rows: dashboard.rows.length,
+          total_columns: 2
+        }, {
+          output: true,
+          hideHeader: true,
+          sticky: false
+        });
+        outputFooter.textContent = "";
+      }
+
+      function renderTotalOutput() {
+        const total = outputPreview && outputPreview.total;
+        if (!total || !total.available) {
+          outputContent.innerHTML = emptyState("Total Results are not available.");
+          outputFooter.textContent = "";
+          return;
+        }
+        outputContent.innerHTML = `
+          <section class="output-section">
+            <div class="section-title">
+              <span>Discount Rate</span>
+              <span>${escapeHtml(total.discount_rate)}</span>
+            </div>
+          </section>
+          ${sectionHtml("PV Cash Flow", total.pv_cash_flow, { output: true, sticky: false })}
+          ${sectionHtml("Total Cash Flow by Scenario", total.cash_flow, { output: true })}
+        `;
+        outputFooter.textContent = footerFor(total.cash_flow, "Total Results", "output workbook");
+      }
+
+      function renderScenarioOutput() {
+        const scenario = outputPreview && outputPreview.scenario;
+        if (!scenario || !scenario.available) {
+          outputContent.innerHTML = emptyState("Scenario Results are not available.");
+          outputFooter.textContent = "";
+          return;
+        }
+        outputContent.innerHTML = `
+          <section class="output-section">
+            <div class="section-title">
+              <span>Scenario</span>
+              <span>${escapeHtml(scenario.scenario)}</span>
+            </div>
+          </section>
+          ${sectionHtml("Cash Flow Projection by Policy", scenario.cash_flow, { output: true })}
+        `;
+        outputFooter.textContent = footerFor(scenario.cash_flow, "Scenario Results", "output workbook");
+      }
+
+      function renderPolicyOutput() {
+        const policy = outputPreview && outputPreview.policy;
+        if (!policy || !policy.available) {
+          outputContent.innerHTML = emptyState("Policy Results are not available.");
+          outputFooter.textContent = "";
+          return;
+        }
+        outputContent.innerHTML = `
+          ${sectionHtml("Policy Inputs", policy.inputs, { output: true, hideHeader: true, sticky: false })}
+          ${sectionHtml("Policy Calculations", policy.calculations, { output: true })}
+        `;
+        outputFooter.textContent = footerFor(policy.calculations, "Policy Results", "output workbook");
+      }
+
+      function renderOutput(name) {
+        activeOutput = name;
+        outputTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.output === name));
+        if (name === "dashboard") renderDashboardOutput();
+        if (name === "total") renderTotalOutput();
+        if (name === "scenario") renderScenarioOutput();
+        if (name === "policy") renderPolicyOutput();
+      }
+
+      function parseMoney(value) {
+        if (typeof value === "number") return value;
+        const parsed = Number(String(value ?? "").replace(/[$,]/g, ""));
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function svgPointSeries(rows, columnIndex, width, height, padding) {
+        const values = rows.map((row) => parseMoney(row[columnIndex]));
+        const maxValue = Math.max(...values, 1);
+        return values.map((value, index) => {
+          const x = padding + (index * (width - padding * 2)) / Math.max(rows.length - 1, 1);
+          const y = height - padding - (value / maxValue) * (height - padding * 2);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(" ");
+      }
+
+      function renderScenarioChart() {
+        const scenario = outputPreview && outputPreview.scenario;
+        if (!scenario || !scenario.available || !scenario.cash_flow.rows.length) {
+          scenarioChart.innerHTML = emptyState("Run the model to draw scenario cash flows.");
+          scenarioChartNote.textContent = "";
+          return;
+        }
+        const rows = scenario.cash_flow.rows.slice(0, 8);
+        const headers = scenario.cash_flow.headers;
+        const totalColumn = headers.findIndex((header) => String(header).toLowerCase() === "total");
+        const policyColumns = headers
+          .map((header, index) => ({ header, index }))
+          .filter((item) => item.index > 0 && item.index !== totalColumn)
+          .slice(0, 4);
+        const totals = rows.map((row) => parseMoney(row[totalColumn > -1 ? totalColumn : row.length - 1]));
+        const maxTotal = Math.max(...totals, 1);
+
+        scenarioChartTitle.textContent = `Scenario ${scenario.scenario} Cash Flows by Policy`;
+        scenarioChart.innerHTML = `
+          <div class="stacked-bars" aria-hidden="true">
+            ${rows.map((row, rowIndex) => {
+              const total = totals[rowIndex] || 1;
+              const shares = policyColumns.map((column) => {
+                const value = parseMoney(row[column.index]);
+                return Math.max(1, Math.round((value / total) * 100));
+              });
+              while (shares.length < 4) shares.push(1);
+              const height = Math.max(10, Math.round((total / maxTotal) * 86));
+              return `
+                <div class="stacked-column" style="--h: ${height}%; --a: ${shares[0]}fr; --b: ${shares[1]}fr; --c: ${shares[2]}fr; --d: ${shares[3]}fr;" data-label="${escapeHtml(row[0])}">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              `;
+            }).join("")}
+          </div>
+          <svg class="total-line" viewBox="0 0 620 232" aria-hidden="true">
+            <polyline points="${svgPointSeries(rows, totalColumn > -1 ? totalColumn : rows[0].length - 1, 620, 232, 38)}" fill="none" stroke="#111" stroke-width="3" stroke-dasharray="8 5"></polyline>
+          </svg>
+        `;
+        scenarioChartNote.textContent = "Stacked policy cash flows by year with a dashed Total line.";
+      }
+
+      function renderTotalChart() {
+        const total = outputPreview && outputPreview.total;
+        if (!total || !total.available || !total.cash_flow.rows.length) {
+          totalChart.innerHTML = emptyState("Run the model to draw cash flow projections.");
+          totalChartNote.textContent = "";
+          return;
+        }
+        const rows = total.cash_flow.rows.slice(0, 12);
+        const colors = ["#0f6b5f", "#8a3356", "#b56211", "#49617a"];
+        const scenarioColumns = total.cash_flow.headers
+          .map((header, index) => ({ header, index }))
+          .filter((item) => item.index > 0)
+          .slice(0, 4);
+        totalChart.innerHTML = `
+          <svg viewBox="0 0 620 232" role="img" aria-labelledby="lineChartTitle">
+            <title id="lineChartTitle">Cash flow projection by scenario</title>
+            ${scenarioColumns.map((column, index) => `
+              <polyline points="${svgPointSeries(rows, column.index, 620, 232, 30)}" fill="none" stroke="${colors[index % colors.length]}" stroke-width="${index === 0 ? 4 : 3}"></polyline>
+            `).join("")}
+          </svg>
+        `;
+        totalChartNote.textContent = "Representative scenarios across projection years.";
+      }
+
+      function renderCharts() {
+        renderScenarioChart();
+        renderTotalChart();
+      }
+
+      function renderLog(entries) {
+        if (!entries || !entries.length) return;
+        runLogBody.innerHTML = entries.map((entry) => `
+          <tr>
+            <td>${escapeHtml(entry.date)}</td>
+            <td class="time">${escapeHtml(entry.time)}</td>
+            <td>${escapeHtml(entry.user)}</td>
+            <td>${escapeHtml(entry.action)}</td>
+            <td>${escapeHtml(entry.input_file || "")}</td>
+            <td>${escapeHtml(entry.output_file || "")}</td>
+            <td>${escapeHtml(entry.status || "")}</td>
+          </tr>
+        `).join("");
+      }
+
+      function applyRunStatus(state) {
+        runStatus.textContent = state.status || "Ready";
+        runtime.textContent = state.runtime || "00:00:00";
+        if (state.output_path) {
+          outputFileName.textContent = state.output_path.split(/[\\/]/).pop();
+          openOutputButton.disabled = false;
+        }
+        if (state.error) {
+          statusText.textContent = state.error;
+        } else if (state.running) {
+          statusText.textContent = "Running model";
+        } else if (state.status === "Complete") {
+          statusText.textContent = "Run complete";
+        }
+        renderLog(state.log);
+        if (state.output) {
+          applyOutputPreview(state.output);
+        }
+      }
+
+      async function loadDefaultWorkbook() {
+        if (!bridgeReady()) {
+          statusText.textContent = "Open this UI with python -m mbc_model.ui to connect the Python model.";
+          renderSheet(activeSheet);
+          renderOutput(activeOutput);
+          renderCharts();
+          return;
+        }
+        const response = await api().get_input_preview(currentInputPath);
+        if (response.ok) {
+          applyInputPreview(response.preview);
+          applyRunStatus(response.status);
+        } else {
+          statusText.textContent = response.error || "Could not load workbook";
+        }
+      }
+
+      async function browseWorkbook(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!bridgeReady()) {
+          statusText.textContent = "The native file picker is available in the desktop app.";
+          return;
+        }
+        statusText.textContent = "Opening file picker";
+        const response = await api().browse_input_file();
+        if (response.cancelled) {
+          statusText.textContent = "Workbook selection cancelled";
+          return;
+        }
+        if (response.ok) {
+          applyInputPreview(response.preview);
+          applyRunStatus(response.status);
+        } else {
+          statusText.textContent = response.error || "Could not read workbook";
+        }
+      }
+
+      async function startRun(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!bridgeReady()) {
+          statusText.textContent = "Run the desktop app with python -m mbc_model.ui to execute the model.";
+          return;
+        }
+        if (!currentInputPath) {
+          statusText.textContent = "Select an input workbook first";
+          return;
+        }
+        const response = await api().start_run(currentInputPath);
+        if (!response.ok) {
+          statusText.textContent = response.error || "Could not start model run";
+          return;
+        }
+        applyRunStatus(response.status);
+        showScreen("outputs-screen");
+        if (pollTimer) window.clearInterval(pollTimer);
+        pollTimer = window.setInterval(async () => {
+          const state = await api().get_run_status();
+          applyRunStatus(state);
+          if (!state.running) {
+            window.clearInterval(pollTimer);
+            pollTimer = null;
+          }
+        }, 1000);
+      }
+
+      async function openOutput(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!bridgeReady()) {
+          statusText.textContent = "Opening output files is available in the desktop app.";
+          return;
+        }
+        const response = await api().open_output_file(outputPreview ? outputPreview.path : "");
+        statusText.textContent = response.ok ? "Opened output workbook" : (response.error || "Could not open output workbook");
+      }
+
+      function clearWorkbook(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        currentInputPath = "";
+        workbookPreview = null;
+        outputPreview = null;
+        filePath.value = "";
+        runStatus.textContent = "Waiting";
+        outputFileName.textContent = "No output yet";
+        openOutputButton.disabled = true;
+        statusText.textContent = "No workbook selected";
+        renderSheet(activeSheet);
+        renderOutput(activeOutput);
+        renderCharts();
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", (event) => {
+          event.stopImmediatePropagation();
+          showScreen(tab.dataset.screen);
+        }, true);
+      });
+      sheetTabs.forEach((tab) => {
+        tab.addEventListener("click", (event) => {
+          event.stopImmediatePropagation();
+          renderSheet(tab.dataset.sheet);
+        }, true);
+      });
+      outputTabs.forEach((tab) => {
+        tab.addEventListener("click", (event) => {
+          event.stopImmediatePropagation();
+          renderOutput(tab.dataset.output);
+        }, true);
+      });
+
+      document.getElementById("browseButton").addEventListener("click", browseWorkbook, true);
+      document.getElementById("clearButton").addEventListener("click", clearWorkbook, true);
+      runButton.addEventListener("click", startRun, true);
+      openOutputButton.addEventListener("click", openOutput, true);
+      sheetContent.addEventListener("input", () => setDirty(true), true);
+      sheetContent.addEventListener("change", () => setDirty(true), true);
+
+      renderSheet(activeSheet);
+      renderOutput(activeOutput);
+      renderCharts();
+      window.addEventListener("pywebviewready", loadDefaultWorkbook);
+      if (bridgeReady()) loadDefaultWorkbook();
+    })();
   </script>
 </body>
 </html>
