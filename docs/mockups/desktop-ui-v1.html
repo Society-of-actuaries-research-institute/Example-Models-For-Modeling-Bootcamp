@@ -35,6 +35,11 @@
       letter-spacing: 0;
     }
 
+    body.busy,
+    body.busy * {
+      cursor: wait !important;
+    }
+
     button,
     input,
     select {
@@ -50,37 +55,8 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-rows: 44px 56px 1fr 30px;
+      grid-template-rows: 56px 1fr 30px;
       overflow: hidden;
-    }
-
-    .titlebar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      background: #26312d;
-      color: #f7fbf8;
-    }
-
-    .titlebar h1 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 650;
-    }
-
-    .window-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .window-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: #dce3df;
-      opacity: 0.72;
     }
 
     .toolbar {
@@ -391,6 +367,22 @@
       background: #ffffff;
       overflow: hidden;
       min-width: 0;
+    }
+
+    .reporting-table {
+      table-layout: fixed;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .reporting-table td:first-child,
+    .reporting-table th:first-child {
+      width: 52%;
+    }
+
+    .reporting-table td:nth-child(2),
+    .reporting-table th:nth-child(2) {
+      width: 48%;
     }
 
     .section-title {
@@ -751,15 +743,6 @@
 </head>
 <body>
   <div class="app-shell" role="application" aria-label="MBC model desktop mockup">
-    <header class="titlebar">
-      <h1>MBC Production Model</h1>
-      <div class="window-controls" aria-hidden="true">
-        <span class="window-dot"></span>
-        <span class="window-dot"></span>
-        <span class="window-dot"></span>
-      </div>
-    </header>
-
     <div class="toolbar">
       <nav class="tabs" aria-label="Main sections">
         <button class="tab" id="tab-inputs" aria-selected="true" data-screen="inputs-screen">Inputs</button>
@@ -780,7 +763,7 @@
             </div>
             <div class="panel-body">
               <div class="file-picker">
-                <input class="input-path" id="filePath" value="inputs/Interface_Example_v4.xlsm" readonly>
+                <input class="input-path" id="filePath" value="inputs/Input 10 pol 25 scen table.xlsm" readonly>
                 <div class="file-actions">
                   <button class="btn" type="button" id="browseButton">Browse</button>
                   <button class="btn" type="button" id="clearButton">Clear</button>
@@ -966,8 +949,8 @@
                       <td>2026-05-06</td>
                       <td class="time">10:42:11</td>
                       <td>iniki</td>
-                      <td>Loaded workbook inputs/Interface_Example_v4.xlsm</td>
-                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td>Loaded workbook inputs/Input 10 pol 25 scen table.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
                       <td></td>
                       <td>Ready</td>
                     </tr>
@@ -976,7 +959,7 @@
                       <td class="time">10:42:12</td>
                       <td>iniki</td>
                       <td>Computed cumulative survival matrix</td>
-                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
                       <td></td>
                       <td>Running</td>
                     </tr>
@@ -985,7 +968,7 @@
                       <td class="time">10:42:13</td>
                       <td>iniki</td>
                       <td>Projected 10 policies across 25 scenarios</td>
-                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
                       <td></td>
                       <td>Running</td>
                     </tr>
@@ -994,7 +977,7 @@
                       <td class="time">10:42:14</td>
                       <td>iniki</td>
                       <td>Wrote output workbook and refreshed output tables</td>
-                      <td>inputs/Interface_Example_v4.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
                       <td>results_20260427_145519.xlsx</td>
                       <td>Complete</td>
                     </tr>
@@ -1576,6 +1559,10 @@
         return Boolean(api());
       }
 
+      function setBusy(isBusy) {
+        document.body.classList.toggle("busy", isBusy);
+      }
+
       function escapeHtml(value) {
         return String(value ?? "")
           .replaceAll("&", "&amp;")
@@ -1623,6 +1610,7 @@
 
       function tableHtml(headers, rows, options = {}) {
         const classes = options.sticky ? "table-wrap sticky-table" : "table-wrap";
+        const tableClass = options.tableClass ? ` class="${escapeHtml(options.tableClass)}"` : "";
         const headerHtml = headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("");
         const rowHtml = rows.map((row) => {
           const cells = row.map((cell, index) => {
@@ -1634,7 +1622,7 @@
         const headHtml = options.hideHeader ? "" : `<thead><tr>${headerHtml}</tr></thead>`;
         return `
           <div class="${classes}">
-            <table aria-label="${escapeHtml(options.label || "Table preview")}">
+            <table${tableClass} aria-label="${escapeHtml(options.label || "Table preview")}">
               ${headHtml}
               <tbody>${rowHtml}</tbody>
             </table>
@@ -1654,6 +1642,7 @@
           sticky: options.sticky !== false,
           hideHeader: options.hideHeader,
           label,
+          tableClass: options.tableClass,
           formatter: options.formatter
         });
       }
@@ -1665,6 +1654,7 @@
               <span>${escapeHtml(title)}</span>
             </div>
             ${tablePayloadHtml(payload, title, options)}
+            ${options.footer ? `<div class="table-footer">${escapeHtml(options.footer)}</div>` : ""}
           </section>
         `;
       }
@@ -1768,6 +1758,7 @@
           }, {
             hideHeader: true,
             sticky: false,
+            tableClass: "reporting-table",
             formatter: formatInputCell
           })
         )).join("");
@@ -1818,6 +1809,19 @@
           outputFooter.textContent = "";
           return;
         }
+        const pvFooter = total.pv_cash_flow && total.pv_cash_flow.has_more_columns
+          ? "Showing first 100 scenarios. More data is in the output workbook."
+          : "";
+        const cashFlowSection = total.pv_cash_flow && total.pv_cash_flow.has_more_columns
+          ? `
+            <section class="output-section">
+              <div class="section-title">
+                <span>Total Cash Flow by Scenario</span>
+              </div>
+              ${emptyState("Not shown due to size of data.")}
+            </section>
+          `
+          : sectionHtml("Total Cash Flow by Scenario", total.cash_flow, { output: true });
         outputContent.innerHTML = `
           <section class="output-section">
             <div class="section-title">
@@ -1825,10 +1829,10 @@
               <span>${escapeHtml(total.discount_rate)}</span>
             </div>
           </section>
-          ${sectionHtml("PV Cash Flow", total.pv_cash_flow, { output: true, sticky: false })}
-          ${sectionHtml("Total Cash Flow by Scenario", total.cash_flow, { output: true })}
+          ${sectionHtml("PV Cash Flow", total.pv_cash_flow, { output: true, sticky: false, footer: pvFooter })}
+          ${cashFlowSection}
         `;
-        outputFooter.textContent = footerFor(total.cash_flow, "Total Results", "output workbook");
+        outputFooter.textContent = "";
       }
 
       function renderScenarioOutput() {
@@ -1847,7 +1851,7 @@
           </section>
           ${sectionHtml("Cash Flow Projection by Policy", scenario.cash_flow, { output: true })}
         `;
-        outputFooter.textContent = footerFor(scenario.cash_flow, "Scenario Results", "output workbook");
+        outputFooter.textContent = "";
       }
 
       function renderPolicyOutput() {
@@ -1861,7 +1865,7 @@
           ${sectionHtml("Policy Inputs", policy.inputs, { output: true, hideHeader: true, sticky: false })}
           ${sectionHtml("Policy Calculations", policy.calculations, { output: true })}
         `;
-        outputFooter.textContent = footerFor(policy.calculations, "Policy Results", "output workbook");
+        outputFooter.textContent = "";
       }
 
       function renderOutput(name) {
@@ -1935,6 +1939,18 @@
         `).join("");
       }
 
+      function clearOutputForRun() {
+        outputPreview = null;
+        outputFileName.textContent = "No output yet";
+        openOutputButton.disabled = true;
+        outputContent.innerHTML = emptyState("Model run is in progress.");
+        outputFooter.textContent = "";
+        scenarioChart.innerHTML = emptyState("Model run is in progress.");
+        totalChart.innerHTML = emptyState("Model run is in progress.");
+        scenarioChartNote.textContent = "";
+        totalChartNote.textContent = "";
+      }
+
       function applyRunStatus(state) {
         runStatus.textContent = state.status || "Ready";
         runtime.textContent = state.runtime || "00:00:00";
@@ -1963,12 +1979,17 @@
           renderCharts();
           return;
         }
-        const response = await api().get_input_preview(currentInputPath);
-        if (response.ok) {
-          applyInputPreview(response.preview);
-          applyRunStatus(response.status);
-        } else {
-          statusText.textContent = response.error || "Could not load workbook";
+        setBusy(true);
+        try {
+          const response = await api().get_input_preview(currentInputPath);
+          if (response.ok) {
+            applyInputPreview(response.preview);
+            applyRunStatus(response.status);
+          } else {
+            statusText.textContent = response.error || "Could not load workbook";
+          }
+        } finally {
+          setBusy(false);
         }
       }
 
@@ -1980,16 +2001,21 @@
           return;
         }
         statusText.textContent = "Opening file picker";
-        const response = await api().browse_input_file();
-        if (response.cancelled) {
-          statusText.textContent = "Workbook selection cancelled";
-          return;
-        }
-        if (response.ok) {
-          applyInputPreview(response.preview);
-          applyRunStatus(response.status);
-        } else {
-          statusText.textContent = response.error || "Could not read workbook";
+        setBusy(true);
+        try {
+          const response = await api().browse_input_file();
+          if (response.cancelled) {
+            statusText.textContent = "Workbook selection cancelled";
+            return;
+          }
+          if (response.ok) {
+            applyInputPreview(response.preview);
+            applyRunStatus(response.status);
+          } else {
+            statusText.textContent = response.error || "Could not read workbook";
+          }
+        } finally {
+          setBusy(false);
         }
       }
 
@@ -2004,9 +2030,12 @@
           statusText.textContent = "Select an input workbook first";
           return;
         }
+        clearOutputForRun();
+        setBusy(true);
         const response = await api().start_run(currentInputPath);
         if (!response.ok) {
           statusText.textContent = response.error || "Could not start model run";
+          setBusy(false);
           return;
         }
         applyRunStatus(response.status);
@@ -2016,6 +2045,7 @@
           const state = await api().get_run_status();
           applyRunStatus(state);
           if (!state.running) {
+            setBusy(false);
             window.clearInterval(pollTimer);
             pollTimer = null;
           }

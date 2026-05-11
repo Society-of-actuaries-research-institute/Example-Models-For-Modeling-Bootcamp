@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import os
 import time
 from pathlib import Path
@@ -16,8 +17,8 @@ _SMALL_SEED = _ROOT / "inputs" / "Input 10 pol 25 scen seed.xlsm"
 
 
 @pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
-def test_bridge_get_input_preview_returns_payload() -> None:
-    bridge = DesktopBridge(project_root=_ROOT)
+def test_bridge_get_input_preview_returns_payload(tmp_path: Path) -> None:
+    bridge = DesktopBridge(project_root=_ROOT, run_log_path=tmp_path / "run_log.csv")
 
     response = bridge.get_input_preview(str(_SMALL_SEED))
 
@@ -30,7 +31,11 @@ def test_bridge_get_input_preview_returns_payload() -> None:
 @pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
 def test_bridge_start_run_updates_status_with_output(tmp_path: Path) -> None:
     output_path, results = run_with_results(_SMALL_SEED, output_dir=tmp_path, verbose=False)
-    bridge = DesktopBridge(project_root=_ROOT, runner=lambda _path: (output_path, results))
+    bridge = DesktopBridge(
+        project_root=_ROOT,
+        runner=lambda _path: (output_path, results),
+        run_log_path=tmp_path / "run_log.csv",
+    )
 
     response = bridge.start_run(str(_SMALL_SEED))
     assert response["ok"]
@@ -55,7 +60,7 @@ def test_bridge_open_output_file_uses_platform_opener(
 ) -> None:
     output_path = tmp_path / "results.xlsx"
     output_path.write_text("placeholder", encoding="utf-8")
-    bridge = DesktopBridge(project_root=_ROOT)
+    bridge = DesktopBridge(project_root=_ROOT, run_log_path=tmp_path / "run_log.csv")
 
     calls: list[str] = []
     if os.name == "nt":
@@ -70,3 +75,22 @@ def test_bridge_open_output_file_uses_platform_opener(
 
     assert response["ok"]
     assert calls == [str(output_path.resolve())]
+
+
+@pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
+def test_bridge_run_log_persists_to_csv(tmp_path: Path) -> None:
+    log_path = tmp_path / "run_log.csv"
+    bridge = DesktopBridge(project_root=_ROOT, run_log_path=log_path)
+
+    response = bridge.get_input_preview(str(_SMALL_SEED))
+
+    assert response["ok"]
+    with log_path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[-1]["status"] == "Ready"
+    assert rows[-1]["input_file"] == str(_SMALL_SEED.resolve())
+
+    reloaded = DesktopBridge(project_root=_ROOT, run_log_path=log_path)
+    status = reloaded.get_run_status()
+    assert status["log"][0]["action"].startswith("Loaded workbook")
+    assert status["log"][0]["date"]

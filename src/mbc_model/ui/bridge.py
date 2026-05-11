@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import getpass
 import os
 import subprocess
@@ -15,6 +16,16 @@ from mbc_model.data.models import ModelResults
 from mbc_model.runner import run_with_results
 from mbc_model.ui.preview import build_input_preview, build_output_preview
 
+RUN_LOG_COLUMNS = [
+    "date",
+    "time",
+    "user",
+    "action",
+    "input_file",
+    "output_file",
+    "status",
+]
+
 
 class DesktopBridge:
     """Small API object exposed to JavaScript by pywebview."""
@@ -23,9 +34,11 @@ class DesktopBridge:
         self,
         project_root: Path | None = None,
         runner: Callable[[Path], Path | tuple[Path, ModelResults]] | None = None,
+        run_log_path: Path | None = None,
     ) -> None:
         self._project_root = (project_root or Path.cwd()).resolve()
         self._runner = runner
+        self._run_log_path = (run_log_path or self._project_root / "run_log.csv").resolve()
         self._window: Any = None
         self._lock = threading.Lock()
         self._started_at: float | None = None
@@ -37,7 +50,7 @@ class DesktopBridge:
             "output_path": "",
             "output": None,
             "error": "",
-            "log": [],
+            "log": self._load_log(),
         }
 
     def attach_window(self, window: Any) -> None:
@@ -209,19 +222,37 @@ class DesktopBridge:
         output_path: str = "",
     ) -> None:
         now = datetime.now()
-        self._state["log"].insert(
-            0,
-            {
-                "date": now.strftime("%Y-%m-%d"),
-                "time": now.strftime("%H:%M:%S"),
-                "user": getpass.getuser(),
-                "action": action,
-                "input_file": input_path,
-                "output_file": output_path,
-                "status": status,
-            },
-        )
+        row = {
+            "date": now.strftime("%Y-%m-%d"),
+            "time": now.strftime("%H:%M:%S"),
+            "user": getpass.getuser(),
+            "action": action,
+            "input_file": input_path,
+            "output_file": output_path,
+            "status": status,
+        }
+        self._append_log_row(row)
+        self._state["log"].insert(0, row)
         self._state["log"] = self._state["log"][:100]
+
+    def _load_log(self) -> list[dict[str, str]]:
+        if not self._run_log_path.exists():
+            return []
+        with self._run_log_path.open("r", encoding="utf-8", newline="") as handle:
+            rows = [
+                {column: row.get(column, "") for column in RUN_LOG_COLUMNS}
+                for row in csv.DictReader(handle)
+            ]
+        return list(reversed(rows[-100:]))
+
+    def _append_log_row(self, row: dict[str, str]) -> None:
+        self._run_log_path.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not self._run_log_path.exists()
+        with self._run_log_path.open("a", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=RUN_LOG_COLUMNS)
+            if write_header:
+                writer.writeheader()
+            writer.writerow(row)
 
     @staticmethod
     def _error(message: str) -> dict[str, Any]:

@@ -8,6 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from openpyxl import Workbook
 
 from mbc_model.data.models import ModelResults
 from mbc_model.reporting.charts import GRAPH_NOT_REQUESTED_MESSAGE
@@ -81,6 +82,24 @@ def test_output_preview_says_when_graphs_were_not_requested(tmp_path: Path) -> N
     assert not preview["dashboard"]["chart"]["available"]
     assert preview["scenario"]["chart"]["message"] == GRAPH_NOT_REQUESTED_MESSAGE
     assert preview["dashboard"]["chart"]["message"] == GRAPH_NOT_REQUESTED_MESSAGE
+
+
+def test_output_preview_flags_more_pv_cash_flow_scenarios(tmp_path: Path) -> None:
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Total Results"
+    sheet.cell(1, 1, "Discount Rate")
+    sheet.cell(1, 2, 0.04)
+    sheet.cell(2, 1, "PV Cash Flow")
+    for column in range(2, 103):
+        sheet.cell(2, column, column * 100)
+    path = tmp_path / "results.xlsx"
+    workbook.save(path)
+
+    preview = build_output_preview(path)
+
+    assert preview["total"]["pv_cash_flow"]["shown_columns"] == PREVIEW_LIMIT
+    assert preview["total"]["pv_cash_flow"]["has_more_columns"]
 
 
 @pytest.mark.slow
