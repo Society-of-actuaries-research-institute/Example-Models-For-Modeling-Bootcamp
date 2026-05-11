@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "MBC Desktop UI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "mbc_model.ui",
+            "python": "C:\\Users\\iniki\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "MBC CLI - small seed workbook",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "mbc_model",
+            "python": "C:\\Users\\iniki\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+            "args": [
+                "inputs\\Input 10 pol 25 scen seed.xlsm"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Current Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "python": "C:\\Users\\iniki\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}

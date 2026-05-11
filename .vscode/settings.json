@@ -1,4 +1,5 @@
 {
+    "python.defaultInterpreterPath": "C:\\Users\\iniki\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
     "python.testing.pytestArgs": [
         "tests"
     ],
