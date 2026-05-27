@@ -434,6 +434,17 @@
       gap: 8px;
     }
 
+    .save-status {
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 360px;
+    }
+
+    .save-status.error {
+      color: #9b1c1c;
+      font-weight: 650;
+    }
+
     .btn.save {
       color: var(--muted);
       background: #edf1ee;
@@ -546,6 +557,21 @@
       object-fit: contain;
       display: block;
       background: #ffffff;
+    }
+
+    .chart.rendered-chart {
+      padding: 0;
+      background: #ffffff;
+    }
+
+    .chart.rendered-chart img {
+      object-fit: fill;
+    }
+
+    .chart .empty-state {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
     }
 
     .stacked-chart {
@@ -763,12 +789,12 @@
             </div>
             <div class="panel-body">
               <div class="file-picker">
-                <input class="input-path" id="filePath" value="inputs/Input 10 pol 25 scen table.xlsm" readonly>
+                <input class="input-path" id="filePath" value="inputs/Input 10 pol 25 scen table.xlsx" readonly>
                 <div class="file-actions">
                   <button class="btn" type="button" id="browseButton">Browse</button>
                   <button class="btn" type="button" id="clearButton">Clear</button>
                 </div>
-                <input class="hidden-input" id="fileInput" type="file" accept=".xlsm,.xlsx">
+                <input class="hidden-input" id="fileInput" type="file" accept=".xlsx">
               </div>
 
               <div class="meta-grid">
@@ -807,6 +833,7 @@
               </div>
               <div class="sheet-actions">
                 <button class="btn save" type="button" id="saveWorkbookButton" disabled>Save</button>
+                <span class="save-status" id="saveStatus"></span>
               </div>
             </div>
             <div class="panel-body">
@@ -865,7 +892,7 @@
             <div class="stack">
               <section class="panel chart-panel">
                 <div class="panel-header">
-                  <h3 id="scenarioChartTitle">Scenario 25 Cash Flows by Policy</h3>
+                  <h3 id="scenarioChartTitle">Scenario Cash Flows by Policy</h3>
                 </div>
                 <div class="panel-body">
                   <div class="chart stacked-chart" id="scenarioChart" aria-label="Scenario cash flows by policy">
@@ -949,8 +976,8 @@
                       <td>2026-05-06</td>
                       <td class="time">10:42:11</td>
                       <td>iniki</td>
-                      <td>Loaded workbook inputs/Input 10 pol 25 scen table.xlsm</td>
-                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
+                      <td>Loaded workbook inputs/Input 10 pol 25 scen table.xlsx</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsx</td>
                       <td></td>
                       <td>Ready</td>
                     </tr>
@@ -959,7 +986,7 @@
                       <td class="time">10:42:12</td>
                       <td>iniki</td>
                       <td>Computed cumulative survival matrix</td>
-                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsx</td>
                       <td></td>
                       <td>Running</td>
                     </tr>
@@ -968,7 +995,7 @@
                       <td class="time">10:42:13</td>
                       <td>iniki</td>
                       <td>Projected 10 policies across 25 scenarios</td>
-                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsx</td>
                       <td></td>
                       <td>Running</td>
                     </tr>
@@ -977,7 +1004,7 @@
                       <td class="time">10:42:14</td>
                       <td>iniki</td>
                       <td>Wrote output workbook and refreshed output tables</td>
-                      <td>inputs/Input 10 pol 25 scen table.xlsm</td>
+                      <td>inputs/Input 10 pol 25 scen table.xlsx</td>
                       <td>results_20260427_145519.xlsx</td>
                       <td>Complete</td>
                     </tr>
@@ -992,7 +1019,7 @@
 
     <footer class="statusbar">
       <span id="statusText">Workbook ready</span>
-      <span>Python 3.11 | Excel macro workbook input</span>
+      <span>Python 3.11 | Excel workbook input</span>
     </footer>
   </div>
 
@@ -1531,6 +1558,7 @@
       const sheetContent = document.getElementById("sheetContent");
       const sheetFooter = document.getElementById("sheetFooter");
       const saveWorkbookButton = document.getElementById("saveWorkbookButton");
+      const saveStatus = document.getElementById("saveStatus");
       const outputContent = document.getElementById("outputContent");
       const outputFooter = document.getElementById("outputFooter");
       const outputFileName = document.getElementById("outputFileName");
@@ -1550,6 +1578,7 @@
       let outputPreview = null;
       let currentInputPath = filePath.value;
       let pollTimer = null;
+      let pendingChanges = emptyChanges();
 
       function api() {
         return window.pywebview && window.pywebview.api ? window.pywebview.api : null;
@@ -1563,6 +1592,19 @@
         document.body.classList.toggle("busy", isBusy);
       }
 
+      function emptyChanges() {
+        return {
+          inforce: {},
+          parameters: {
+            projection_settings: {},
+            mortality_rates: {},
+            projection_scale: {},
+            random_numbers: {}
+          },
+          reporting: {}
+        };
+      }
+
       function escapeHtml(value) {
         return String(value ?? "")
           .replaceAll("&", "&amp;")
@@ -1570,6 +1612,32 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
+      }
+
+      function inputHtml(value, dataset, options = {}) {
+        const attrs = Object.entries(dataset)
+          .map(([key, dataValue]) => `data-${key}="${escapeHtml(dataValue)}"`)
+          .join(" ");
+        const type = options.type || "text";
+        const disabled = options.disabled ? " disabled" : "";
+        const step = type === "number" ? ' step="any"' : "";
+        return `<input data-editable="true" ${attrs} type="${type}" value="${escapeHtml(value)}"${step}${disabled}>`;
+      }
+
+      function selectHtml(value, values, dataset, disabled = false) {
+        const attrs = Object.entries(dataset)
+          .map(([key, dataValue]) => `data-${key}="${escapeHtml(dataValue)}"`)
+          .join(" ");
+        return `
+          <select data-editable="true" ${attrs}${disabled ? " disabled" : ""}>
+            ${values.map((item) => `<option value="${escapeHtml(item)}"${item === value ? " selected" : ""}>${escapeHtml(item)}</option>`).join("")}
+          </select>
+        `;
+      }
+
+      function saveMessage(message, isError = false) {
+        saveStatus.textContent = message || "";
+        saveStatus.classList.toggle("error", isError);
       }
 
       function formatInteger(value) {
@@ -1612,9 +1680,12 @@
         const classes = options.sticky ? "table-wrap sticky-table" : "table-wrap";
         const tableClass = options.tableClass ? ` class="${escapeHtml(options.tableClass)}"` : "";
         const headerHtml = headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("");
-        const rowHtml = rows.map((row) => {
+        const rowHtml = rows.map((row, rowIndex) => {
           const cells = row.map((cell, index) => {
             const header = headers[index] || "";
+            if (options.cellRenderer) {
+              return `<td>${options.cellRenderer(header, cell, rowIndex, index, row)}</td>`;
+            }
             return `<td>${escapeHtml(options.formatter ? options.formatter(header, cell) : cell)}</td>`;
           }).join("");
           return `<tr>${cells}</tr>`;
@@ -1643,7 +1714,8 @@
           hideHeader: options.hideHeader,
           label,
           tableClass: options.tableClass,
-          formatter: options.formatter
+          formatter: options.formatter,
+          cellRenderer: options.cellRenderer
         });
       }
 
@@ -1668,15 +1740,109 @@
       }
 
       function setDirty(isDirty) {
-        saveWorkbookButton.disabled = true;
-        saveWorkbookButton.classList.remove("dirty");
+        saveWorkbookButton.disabled = !isDirty;
+        saveWorkbookButton.classList.toggle("dirty", isDirty);
         if (isDirty) {
-          statusText.textContent = "Workbook editing is not enabled in this desktop preview";
+          statusText.textContent = "Unsaved workbook edits";
+          saveMessage("Unsaved changes");
+        } else {
+          saveMessage("");
         }
+      }
+
+      function hasPendingChanges() {
+        return JSON.stringify(pendingChanges) !== JSON.stringify(emptyChanges());
+      }
+
+      function syncDirtyState() {
+        setDirty(hasPendingChanges());
+      }
+
+      function pendingInforceValue(policyId, field, fallback) {
+        return pendingChanges.inforce[`${policyId}|${field}`]?.value ?? fallback;
+      }
+
+      function pendingParameterValue(table, key, field, fallback) {
+        const entry = pendingChanges.parameters[table][key];
+        if (!entry) return fallback;
+        if (field) return entry[field] ?? fallback;
+        return entry.value ?? fallback;
+      }
+
+      function pendingReportingValue(section, field, fallback) {
+        return pendingChanges.reporting[`${section}|${field}`]?.value ?? fallback;
+      }
+
+      function inforceCell(header, cell, rowIndex, columnIndex, row) {
+        const editable = workbookPreview.editable && workbookPreview.editable.inforce;
+        if (!editable || columnIndex === 0) return escapeHtml(formatInputCell(header, cell));
+        const policyId = row[0];
+        const value = pendingInforceValue(policyId, header, cell);
+        const dataset = { "edit-section": "inforce", "policy-id": policyId, field: header };
+        if (header === "Gender") return selectHtml(value, ["M", "F"], dataset);
+        return inputHtml(value, dataset, { type: "number" });
+      }
+
+      function projectionSettingsCell(header, cell, rowIndex, columnIndex, row) {
+        if (columnIndex === 0) return escapeHtml(cell);
+        const parameter = row[0];
+        const value = pendingParameterValue("projection_settings", parameter, "", cell);
+        const dataset = {
+          "edit-section": "parameters",
+          "edit-table": "projection_settings",
+          parameter
+        };
+        if (parameter === "Which Random Numbers?") return selectHtml(value, ["Seed", "Table"], dataset);
+        const type = parameter === "Valuation Date" ? "date" : "number";
+        return inputHtml(value, dataset, { type });
+      }
+
+      function genderTableCell(tableName) {
+        return (header, cell, rowIndex, columnIndex, row) => {
+          if (columnIndex === 0) return escapeHtml(cell);
+          const age = row[0];
+          const field = String(header).toLowerCase();
+          const value = pendingParameterValue(tableName, String(age), field, cell);
+          return inputHtml(value, {
+            "edit-section": "parameters",
+            "edit-table": tableName,
+            age,
+            field
+          }, { type: "number" });
+        };
+      }
+
+      function randomNumberCell(header, cell, rowIndex, columnIndex, row) {
+        const editable = workbookPreview.editable && workbookPreview.editable.random_numbers;
+        if (!editable || columnIndex === 0) return escapeHtml(formatInputCell(header, cell));
+        const scenario = row[0];
+        const policy = header;
+        const value = pendingParameterValue("random_numbers", `${scenario}|${policy}`, "value", cell);
+        return inputHtml(value, {
+          "edit-section": "parameters",
+          "edit-table": "random_numbers",
+          scenario,
+          policy
+        }, { type: "number" });
+      }
+
+      function reportingCell(sectionTitle) {
+        return (header, cell, rowIndex, columnIndex, row) => {
+          if (columnIndex === 0) return escapeHtml(cell);
+          const field = row[0];
+          const value = pendingReportingValue(sectionTitle, field, cell);
+          const dataset = { "edit-section": "reporting", section: sectionTitle, field };
+          if (field === "Create?" || field === "Create graph?") {
+            return selectHtml(value, ["Yes", "No"], dataset);
+          }
+          return inputHtml(value, dataset, { type: "number" });
+        };
       }
 
       function applyInputPreview(preview) {
         workbookPreview = preview;
+        pendingChanges = emptyChanges();
+        resetOutputAfterInputChange();
         currentInputPath = preview.path;
         filePath.value = preview.path;
         document.getElementById("policyCount").textContent = formatInteger(preview.policy_count);
@@ -1689,7 +1855,17 @@
         scenariosProjected.textContent = formatInteger(preview.scenario_count);
         statusText.textContent = "Workbook selected";
         runStatus.textContent = "Ready";
+        saveMessage("");
         renderSheet(activeSheet);
+      }
+
+      function resetOutputAfterInputChange() {
+        outputPreview = null;
+        outputFileName.textContent = "No output yet";
+        openOutputButton.disabled = true;
+        outputFooter.textContent = "";
+        renderOutput(activeOutput);
+        renderCharts();
       }
 
       function renderInforce() {
@@ -1702,12 +1878,13 @@
         const payload = workbookPreview.inforce;
         sheetTitle.textContent = payload.total_rows <= previewLimit ? "Inforce Editor" : "Inforce Preview";
         sheetContent.innerHTML = tablePayloadHtml(payload, "Inforce", {
-          formatter: formatInputCell
+          formatter: formatInputCell,
+          cellRenderer: inforceCell
         });
         sheetFooter.textContent = payload.has_more_rows
-          ? `Showing first ${payload.shown_rows} of ${payload.total_rows.toLocaleString("en-US")} policies. More policies are in the workbook.`
+          ? `${workbookPreview.messages.inforce} Showing first ${payload.shown_rows} of ${payload.total_rows.toLocaleString("en-US")} policies. More policies are in the workbook.`
           : `Showing all ${payload.total_rows.toLocaleString("en-US")} policies.`;
-        setDirty(false);
+        syncDirtyState();
       }
 
       function renderParameters() {
@@ -1723,22 +1900,29 @@
           sectionHtml("Projection Settings", parameters.projection_settings, {
             hideHeader: true,
             sticky: false,
-            formatter: formatInputCell
+            formatter: formatInputCell,
+            cellRenderer: projectionSettingsCell
           }),
           sectionHtml("Mortality Rates", parameters.mortality_rates, {
-            formatter: formatInputCell
+            formatter: formatInputCell,
+            cellRenderer: genderTableCell("mortality_rates")
           }),
           sectionHtml("Projection Scale", parameters.projection_scale, {
-            formatter: formatInputCell
+            formatter: formatInputCell,
+            cellRenderer: genderTableCell("projection_scale")
           }),
           sectionHtml("Random Numbers", parameters.random_numbers, {
-            formatter: formatInputCell
+            formatter: formatInputCell,
+            cellRenderer: randomNumberCell
           })
         ].join("");
         sheetFooter.textContent = parameters.random_numbers.has_more_rows || parameters.random_numbers.has_more_columns
           ? footerFor(parameters.random_numbers, "Random Numbers", "workbook")
           : "";
-        setDirty(false);
+        if (parameters.random_numbers.has_more_rows || parameters.random_numbers.has_more_columns) {
+          sheetFooter.textContent = `${workbookPreview.messages.random_numbers} ${sheetFooter.textContent}`.trim();
+        }
+        syncDirtyState();
       }
 
       function renderReporting() {
@@ -1759,11 +1943,12 @@
             hideHeader: true,
             sticky: false,
             tableClass: "reporting-table",
-            formatter: formatInputCell
+            formatter: formatInputCell,
+            cellRenderer: reportingCell(section.title)
           })
         )).join("");
         sheetFooter.textContent = "";
-        setDirty(false);
+        syncDirtyState();
       }
 
       function renderSheet(sheet) {
@@ -1897,11 +2082,14 @@
         const scenario = outputPreview && outputPreview.scenario;
         const chart = scenario && scenario.chart;
         if (!chart || !chart.available) {
+          scenarioChartTitle.textContent = "Scenario Cash Flows by Policy";
+          scenarioChart.classList.remove("rendered-chart");
           scenarioChart.innerHTML = emptyState(chart && chart.message ? chart.message : "Run the model to draw scenario cash flows.");
           scenarioChartNote.textContent = "";
           return;
         }
         scenarioChartTitle.textContent = chart.title || `Scenario ${scenario.scenario} Cash Flows by Policy`;
+        scenarioChart.classList.add("rendered-chart");
         scenarioChart.innerHTML = `<img src="${escapeHtml(chart.data_url)}" alt="${escapeHtml(chart.title || "Scenario cash flows by policy")}">`;
         scenarioChartNote.textContent = "";
       }
@@ -1910,11 +2098,13 @@
         const dashboard = outputPreview && outputPreview.dashboard;
         const chart = dashboard && dashboard.chart;
         if (!chart || !chart.available) {
+          totalChart.classList.remove("rendered-chart");
           totalChart.innerHTML = emptyState("Run the model to draw cash flow projections.");
           if (chart && chart.message) totalChart.innerHTML = emptyState(chart.message);
           totalChartNote.textContent = "";
           return;
         }
+        totalChart.classList.add("rendered-chart");
         totalChart.innerHTML = `<img src="${escapeHtml(chart.data_url)}" alt="${escapeHtml(chart.title || "Cash flow projection by scenario")}">`;
         totalChartNote.textContent = "";
       }
@@ -1939,12 +2129,101 @@
         `).join("");
       }
 
+      function updatePendingChange(target) {
+        if (!target || target.disabled || target.dataset.editable !== "true") return;
+        const value = target.value;
+        if (target.dataset.editSection === "inforce") {
+          const key = `${target.dataset.policyId}|${target.dataset.field}`;
+          pendingChanges.inforce[key] = {
+            policy_id: Number(target.dataset.policyId),
+            field: target.dataset.field,
+            value
+          };
+        } else if (target.dataset.editSection === "parameters") {
+          const table = target.dataset.editTable;
+          if (table === "projection_settings") {
+            pendingChanges.parameters.projection_settings[target.dataset.parameter] = {
+              parameter: target.dataset.parameter,
+              value
+            };
+          } else if (table === "mortality_rates" || table === "projection_scale") {
+            const key = String(target.dataset.age);
+            const entry = pendingChanges.parameters[table][key] || { age: Number(target.dataset.age) };
+            entry[target.dataset.field] = value;
+            pendingChanges.parameters[table][key] = entry;
+          } else if (table === "random_numbers") {
+            const key = `${target.dataset.scenario}|${target.dataset.policy}`;
+            pendingChanges.parameters.random_numbers[key] = {
+              scenario: Number(target.dataset.scenario),
+              policy: Number(target.dataset.policy),
+              value
+            };
+          }
+        } else if (target.dataset.editSection === "reporting") {
+          const key = `${target.dataset.section}|${target.dataset.field}`;
+          pendingChanges.reporting[key] = {
+            section: target.dataset.section,
+            field: target.dataset.field,
+            value
+          };
+        }
+        setDirty(true);
+      }
+
+      function buildChangePayload() {
+        return {
+          inforce: Object.values(pendingChanges.inforce),
+          parameters: {
+            projection_settings: Object.values(pendingChanges.parameters.projection_settings),
+            mortality_rates: Object.values(pendingChanges.parameters.mortality_rates),
+            projection_scale: Object.values(pendingChanges.parameters.projection_scale),
+            random_numbers: Object.values(pendingChanges.parameters.random_numbers)
+          },
+          reporting: Object.values(pendingChanges.reporting)
+        };
+      }
+
+      async function saveInputChanges(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!bridgeReady()) {
+          saveMessage("Save is available in the desktop app.", true);
+          return;
+        }
+        if (!hasPendingChanges()) {
+          saveMessage("No workbook edits to save.");
+          return;
+        }
+        setBusy(true);
+        saveMessage("Validating edits...");
+        try {
+          const response = await api().save_input_changes(currentInputPath, buildChangePayload());
+          if (response.cancelled) {
+            saveMessage("Save cancelled.");
+            return;
+          }
+          if (response.ok) {
+            applyInputPreview(response.preview);
+            applyRunStatus(response.status);
+            setDirty(false);
+            saveMessage(`Saved copy ${response.preview.file_name}`);
+          } else {
+            saveMessage(response.error || "Could not save workbook.", true);
+            statusText.textContent = response.error || "Could not save workbook";
+          }
+        } finally {
+          setBusy(false);
+        }
+      }
+
       function clearOutputForRun() {
         outputPreview = null;
         outputFileName.textContent = "No output yet";
         openOutputButton.disabled = true;
         outputContent.innerHTML = emptyState("Model run is in progress.");
         outputFooter.textContent = "";
+        scenarioChart.classList.remove("rendered-chart");
+        totalChart.classList.remove("rendered-chart");
         scenarioChart.innerHTML = emptyState("Model run is in progress.");
         totalChart.innerHTML = emptyState("Model run is in progress.");
         scenarioChartNote.textContent = "";
@@ -2030,6 +2309,11 @@
           statusText.textContent = "Select an input workbook first";
           return;
         }
+        if (hasPendingChanges()) {
+          saveMessage("Save edits before running the model.", true);
+          statusText.textContent = "Save edits before running";
+          return;
+        }
         clearOutputForRun();
         setBusy(true);
         const response = await api().start_run(currentInputPath);
@@ -2069,11 +2353,14 @@
         currentInputPath = "";
         workbookPreview = null;
         outputPreview = null;
+        pendingChanges = emptyChanges();
         filePath.value = "";
         runStatus.textContent = "Waiting";
         outputFileName.textContent = "No output yet";
         openOutputButton.disabled = true;
         statusText.textContent = "No workbook selected";
+        saveMessage("");
+        setDirty(false);
         renderSheet(activeSheet);
         renderOutput(activeOutput);
         renderCharts();
@@ -2102,8 +2389,9 @@
       document.getElementById("clearButton").addEventListener("click", clearWorkbook, true);
       runButton.addEventListener("click", startRun, true);
       openOutputButton.addEventListener("click", openOutput, true);
-      sheetContent.addEventListener("input", () => setDirty(true), true);
-      sheetContent.addEventListener("change", () => setDirty(true), true);
+      saveWorkbookButton.addEventListener("click", saveInputChanges, true);
+      sheetContent.addEventListener("input", (event) => updatePendingChange(event.target), true);
+      sheetContent.addEventListener("change", (event) => updatePendingChange(event.target), true);
 
       renderSheet(activeSheet);
       renderOutput(activeOutput);

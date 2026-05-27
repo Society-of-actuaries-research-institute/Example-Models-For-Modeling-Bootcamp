@@ -19,7 +19,12 @@ def _constant_table(n_ages: int, qx_value: float, improvement_value: float) -> M
     qx = np.full(n_ages, qx_value, dtype=np.float64)
     qx[-1] = 1.0  # terminal age
     imp = np.full(n_ages, improvement_value, dtype=np.float64)
-    return MortalityTable(male_mortality_rates=qx, female_mortality_rates=qx, male_projection_scale=imp, female_projection_scale=imp)
+    return MortalityTable(
+        male_mortality_rates=qx,
+        female_mortality_rates=qx,
+        male_projection_scale=imp,
+        female_projection_scale=imp,
+    )
 
 
 def _policy(policy_id: int, yob: int, gender: str) -> PolicyRecord:

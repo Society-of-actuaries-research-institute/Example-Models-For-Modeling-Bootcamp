@@ -134,9 +134,9 @@ class ProjectionEngine:
             present_value_by_scenario: float64, shape (n_scenarios,).
         """
         # t = number of years from the valuation date to each projection year
-        time_periods_from_valuation: np.ndarray = (
-            projection_years - valuation_year
-        ).astype(np.float64)
+        time_periods_from_valuation: np.ndarray = (projection_years - valuation_year).astype(
+            np.float64
+        )
 
         # Discount factor for each year: 1 / (1 + rate)^t
         discount_factors_by_year: np.ndarray = (
@@ -187,21 +187,19 @@ class ProjectionEngine:
         attained_ages: np.ndarray = (projection_years - policy.yob).astype(np.int64)
 
         # Clamp age indices to [0, n_ages - 1] to avoid index-out-of-bounds errors
-        age_index_clamped: np.ndarray = np.clip(
-            attained_ages, 0, number_of_ages_in_table - 1
-        )
+        age_index_clamped: np.ndarray = np.clip(attained_ages, 0, number_of_ages_in_table - 1)
 
         # Flag years where the insured's actual age is beyond the mortality table
         beyond_terminal_age: np.ndarray = attained_ages >= number_of_ages_in_table
 
         # Compute improvement factor: (1 - scale) ** (year - BASE_YEAR)
         # Matches the RnD formula: improvement = (1 - improvement_table[age]) ** (year - 2012)
-        years_since_base_year: np.ndarray = (
-            projection_years - MortalityTable.BASE_YEAR
-        ).astype(np.float64)
-        improvement_factor: np.ndarray = (
-            (1.0 - projection_scale_table[age_index_clamped]) ** years_since_base_year
+        years_since_base_year: np.ndarray = (projection_years - MortalityTable.BASE_YEAR).astype(
+            np.float64
         )
+        improvement_factor: np.ndarray = (
+            1.0 - projection_scale_table[age_index_clamped]
+        ) ** years_since_base_year
 
         # Copy base mortality rates so we can overwrite the terminal-age values
         base_qx: np.ndarray = base_mortality_rates_table[age_index_clamped].copy()
@@ -307,30 +305,22 @@ class ProjectionEngine:
             (number_of_scenarios, number_of_projection_years), dtype=np.float64
         )
 
-        number_of_batches: int = (
-            (number_of_policies + _POLICY_BATCH_SIZE - 1) // _POLICY_BATCH_SIZE
-        )
+        number_of_batches: int = (number_of_policies + _POLICY_BATCH_SIZE - 1) // _POLICY_BATCH_SIZE
         last_printed_percentage: int = -1
 
         for batch_index, policy_batch_start in enumerate(
             range(0, number_of_policies, _POLICY_BATCH_SIZE)
         ):
             if verbose:
-                progress_percentage: int = int(
-                    100 * (batch_index + 1) / number_of_batches
-                )
+                progress_percentage: int = int(100 * (batch_index + 1) / number_of_batches)
                 if progress_percentage != last_printed_percentage:
                     # \r moves the cursor to the start of the current line so the
                     # percentage updates in place rather than printing a new line each time.
                     # end="" suppresses the automatic newline; flush=True forces display.
-                    print(
-                        f"\r  Progress: {progress_percentage:3d}%", end="", flush=True
-                    )
+                    print(f"\r  Progress: {progress_percentage:3d}%", end="", flush=True)
                     last_printed_percentage = progress_percentage
 
-            policy_batch_end: int = min(
-                policy_batch_start + _POLICY_BATCH_SIZE, number_of_policies
-            )
+            policy_batch_end: int = min(policy_batch_start + _POLICY_BATCH_SIZE, number_of_policies)
 
             # Copy this batch's random numbers to a contiguous array (see note 1 above)
             random_numbers_for_batch: np.ndarray = random_number_matrix[
@@ -350,7 +340,9 @@ class ProjectionEngine:
             policy_survival_flags: np.ndarray = (
                 random_numbers_for_batch[:, np.newaxis, :]
                 > cumulative_death_for_batch.T[np.newaxis, :, :]
-            ).astype(np.float64)  # shape (n_scenarios, n_years, batch_size)
+            ).astype(
+                np.float64
+            )  # shape (n_scenarios, n_years, batch_size)
 
             # Multiply survival flags by annual benefits and sum across all policies
             # in this batch. @ is matrix multiplication:

@@ -50,7 +50,8 @@
       "Bash(python -m pytest tests/ -v --tb=short)",
       "Bash(findstr /i \"mkdocs\\\\|sphinx\\\\|docs\\\\|pdoc\")",
       "Bash(.venv/Scripts/python -m mkdocs --version)",
-      "Bash(.venv/Scripts/python -c \"import mkdocstrings; print\\('installed'\\)\")"
+      "Bash(.venv/Scripts/python -c \"import mkdocstrings; print\\('installed'\\)\")",
+      "Bash(grep -E \"^\\\\\\\\.\")"
     ]
   }
 }

@@ -23,7 +23,7 @@ cd mbc-production-model
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m mbc_model inputs/Interface_Example_v4.xlsm
+python -m mbc_model "inputs/Input 10 pol 25 scen table.xlsx"
 ```
 
 Output: `outputs/results_<timestamp>.xlsx`

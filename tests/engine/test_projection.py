@@ -29,7 +29,10 @@ def _flat_table(n_ages: int, qx: float) -> MortalityTable:
     qx_arr[-1] = 1.0
     imp = np.zeros(n_ages, dtype=np.float64)
     return MortalityTable(
-        male_mortality_rates=qx_arr, female_mortality_rates=qx_arr, male_projection_scale=imp, female_projection_scale=imp
+        male_mortality_rates=qx_arr,
+        female_mortality_rates=qx_arr,
+        male_projection_scale=imp,
+        female_projection_scale=imp,
     )
 
 
@@ -207,7 +210,9 @@ def test_build_policy_detail_survive_flag_consistent_with_cum_survival() -> None
     years = np.arange(2025, 2040, dtype=np.int64)
     rng_val = 0.5
     detail = ENGINE.build_policy_detail(policy, 2, table, years, random_number=rng_val)
-    expected_flags = (rng_val > detail.cumulative_probability_of_death_1_minus_tPx).astype(np.float64)
+    expected_flags = (rng_val > detail.cumulative_probability_of_death_1_minus_tPx).astype(
+        np.float64
+    )
     np.testing.assert_array_equal(detail.survive_1_dead_0, expected_flags)
 
 

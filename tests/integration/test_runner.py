@@ -9,7 +9,7 @@ import pytest
 
 from mbc_model.runner import run
 
-_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Interface_Example_v4.xlsm"
+_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen table.xlsx"
 _SKIP = not _FIXTURE.exists()
 _SKIP_REASON = f"Fixture workbook not found: {_FIXTURE}"
 

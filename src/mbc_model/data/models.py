@@ -31,10 +31,10 @@ class PolicyRecord:
         annual_benefit: Benefit paid each year the insured is alive, in dollars.
     """
 
-    policy_id: int               # Unique policy number, 1-based
-    yob: int                     # Year of birth (e.g. 1951)
-    gender: Literal["M", "F"]   # "M" = male, "F" = female
-    annual_benefit: float        # Annual benefit in dollars
+    policy_id: int  # Unique policy number, 1-based
+    yob: int  # Year of birth (e.g. 1951)
+    gender: Literal["M", "F"]  # "M" = male, "F" = female
+    annual_benefit: float  # Annual benefit in dollars
 
 
 @dataclass
@@ -67,10 +67,10 @@ class MortalityTable:
     # BASE_YEAR is hardcoded to 2012 to match the RnD model — do not change.
     BASE_YEAR: ClassVar[int] = 2012
 
-    male_mortality_rates: np.ndarray    # Base qx by age for males,   shape (n_ages,), float64
+    male_mortality_rates: np.ndarray  # Base qx by age for males,   shape (n_ages,), float64
     female_mortality_rates: np.ndarray  # Base qx by age for females, shape (n_ages,), float64
-    male_projection_scale: np.ndarray   # Annual improvement % for males,   shape (n_ages,)
-    female_projection_scale: np.ndarray # Annual improvement % for females, shape (n_ages,)
+    male_projection_scale: np.ndarray  # Annual improvement % for males,   shape (n_ages,)
+    female_projection_scale: np.ndarray  # Annual improvement % for females, shape (n_ages,)
 
 
 @dataclass(frozen=True)
@@ -87,9 +87,9 @@ class ModelParameters:
             when "Which Random Numbers?" is set to "Seed".
     """
 
-    valuation_date: date       # End-of-year valuation date (e.g. 2024-12-31)
+    valuation_date: date  # End-of-year valuation date (e.g. 2024-12-31)
     last_projection_year: int  # Last year to project (e.g. 2085)
-    random_seed: int           # Base seed for reproducible random number generation
+    random_seed: int  # Base seed for reproducible random number generation
 
 
 @dataclass
@@ -111,18 +111,18 @@ class ReportingConfig:
         create_dashboard_graph: Whether to embed a line chart in Dashboard Results.
     """
 
-    create_policy_results: bool     # True = write the Policy Results sheet
-    policy_id: int                  # Which policy to show in Policy Results (1-based)
-    policy_scenario_id: int         # Which scenario to use in Policy Results (1-based)
-    create_scenario_results: bool   # True = write the Scenario Results sheet
-    scenario_id: int                # Which scenario to show in Scenario Results (1-based)
-    create_scenario_graph: bool     # True = embed a bar chart in Scenario Results
-    create_total_results: bool      # True = write the Total Results sheet
+    create_policy_results: bool  # True = write the Policy Results sheet
+    policy_id: int  # Which policy to show in Policy Results (1-based)
+    policy_scenario_id: int  # Which scenario to use in Policy Results (1-based)
+    create_scenario_results: bool  # True = write the Scenario Results sheet
+    scenario_id: int  # Which scenario to show in Scenario Results (1-based)
+    create_scenario_graph: bool  # True = embed a bar chart in Scenario Results
+    create_total_results: bool  # True = write the Total Results sheet
     create_dashboard_results: bool  # True = write the Dashboard Results sheet
-    dashboard_scenarios: int        # Number of scenarios in Dashboard Results
-    dashboard_policies: int         # Number of policies in Dashboard Results
-    discount_rate: float            # Annual discount rate, e.g. 0.04 for 4%
-    create_dashboard_graph: bool    # True = embed a line chart in Dashboard Results
+    dashboard_scenarios: int  # Number of scenarios in Dashboard Results
+    dashboard_policies: int  # Number of policies in Dashboard Results
+    discount_rate: float  # Annual discount rate, e.g. 0.04 for 4%
+    create_dashboard_graph: bool  # True = embed a line chart in Dashboard Results
 
 
 @dataclass
@@ -156,23 +156,23 @@ class PolicyDetail:
             Matches RnD key "Total_Cash_Flow".
     """
 
-    policy_id: int           # 1-based policy identifier
-    scenario_id: int         # 1-based scenario identifier
-    random_number: float     # Single random number for this (policy, scenario) pair
+    policy_id: int  # 1-based policy identifier
+    scenario_id: int  # 1-based scenario identifier
+    random_number: float  # Single random number for this (policy, scenario) pair
 
-    projection_years: np.ndarray   # Calendar years, shape (n_years,), dtype int64
-    attained_ages: np.ndarray      # Age in each year, shape (n_years,), dtype int64
+    projection_years: np.ndarray  # Calendar years, shape (n_years,), dtype int64
+    attained_ages: np.ndarray  # Age in each year, shape (n_years,), dtype int64
 
-    base_qx: np.ndarray            # Base mortality rate per year, shape (n_years,)
-    improvement_factor: np.ndarray # (1 - scale)^(year - BASE_YEAR) per year, shape (n_years,)
-    improved_qx: np.ndarray        # base_qx * improvement_factor, shape (n_years,)
-    px: np.ndarray                 # 1 - improved_qx, shape (n_years,)
+    base_qx: np.ndarray  # Base mortality rate per year, shape (n_years,)
+    improvement_factor: np.ndarray  # (1 - scale)^(year - BASE_YEAR) per year, shape (n_years,)
+    improved_qx: np.ndarray  # base_qx * improvement_factor, shape (n_years,)
+    px: np.ndarray  # 1 - improved_qx, shape (n_years,)
 
-    cumulative_probability_of_survival_tPx: np.ndarray    # Running product of px, shape (n_years,)
+    cumulative_probability_of_survival_tPx: np.ndarray  # Running product of px, shape (n_years,)
     cumulative_probability_of_death_1_minus_tPx: np.ndarray  # 1 - tPx, shape (n_years,)
 
-    survive_1_dead_0: np.ndarray   # 1 = alive, 0 = dead, shape (n_years,), dtype float64
-    total_cash_flow: np.ndarray    # annual_benefit * survive_1_dead_0, shape (n_years,)
+    survive_1_dead_0: np.ndarray  # 1 = alive, 0 = dead, shape (n_years,), dtype float64
+    total_cash_flow: np.ndarray  # annual_benefit * survive_1_dead_0, shape (n_years,)
 
 
 @dataclass
@@ -202,10 +202,10 @@ class ModelResults:
 
     policies: list[PolicyRecord]
     projection_years: np.ndarray
-    cumulative_survival_matrix: np.ndarray    # tPx matrix, shape (n_policies, n_years)
-    scenario_cash_flows: np.ndarray           # Total CFs, shape (n_scenarios, n_years)
+    cumulative_survival_matrix: np.ndarray  # tPx matrix, shape (n_policies, n_years)
+    scenario_cash_flows: np.ndarray  # Total CFs, shape (n_scenarios, n_years)
     scenario_policy_cash_flows: np.ndarray | None  # Per-policy CFs or None
-    pv_by_scenario: np.ndarray | None         # PV per scenario or None
-    policy_detail: PolicyDetail | None         # Detail for one (policy, scenario) pair or None
-    runtime_seconds: float                     # Wall-clock runtime in seconds
+    pv_by_scenario: np.ndarray | None  # PV per scenario or None
+    policy_detail: PolicyDetail | None  # Detail for one (policy, scenario) pair or None
+    runtime_seconds: float  # Wall-clock runtime in seconds
     config: ReportingConfig

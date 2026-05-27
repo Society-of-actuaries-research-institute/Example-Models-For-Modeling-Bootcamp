@@ -7,7 +7,7 @@ from pathlib import Path
 
 from mbc_model.runner import run
 
-_DEFAULT_INPUT = Path("inputs") / "Interface_Example_v4.xlsm"
+_DEFAULT_INPUT = Path("inputs") / "Input 10 pol 25 scen table.xlsx"
 
 
 def main() -> None:

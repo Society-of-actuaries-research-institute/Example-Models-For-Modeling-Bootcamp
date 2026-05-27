@@ -1,4 +1,4 @@
-"""Unit tests for ExcelLoader using the real Interface_Example_v4.xlsm fixture.
+"""Unit tests for ExcelLoader using the real workbook fixture.
 
 These tests exercise the full parsing path against the workbook shipped in the
 inputs/ directory.  They are fast (< 2 s) because they only read from the file
@@ -16,7 +16,7 @@ import pytest
 from mbc_model.data.loader import ExcelLoader
 from mbc_model.data.models import ModelParameters, MortalityTable, PolicyRecord, ReportingConfig
 
-_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Interface_Example_v4.xlsm"
+_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen table.xlsx"
 _SKIP = not _FIXTURE.exists()
 _SKIP_REASON = f"Fixture workbook not found: {_FIXTURE}"
 
@@ -160,7 +160,7 @@ def test_load_parameters_random_table_first_entry_matches_rnd() -> None:
     assert random_table[0, 0] == pytest.approx(0.208694776842403, rel=1e-6)
 
 
-_SEEDED_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen seed.xlsm"
+_SEEDED_FIXTURE = Path(__file__).parent.parent.parent / "inputs" / "Input 10 pol 25 scen seed.xlsx"
 _SKIP_SEEDED = not _SEEDED_FIXTURE.exists()
 _SKIP_SEEDED_REASON = f"Fixture workbook not found: {_SEEDED_FIXTURE}"
 

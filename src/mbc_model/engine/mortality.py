@@ -59,9 +59,7 @@ class MortalityEngine:
 
         # Extract years of birth and genders into arrays for vectorised operations.
         # Using arrays lets NumPy process all policies simultaneously instead of looping.
-        years_of_birth: np.ndarray = np.array(
-            [p.yob for p in policies], dtype=np.int64
-        )
+        years_of_birth: np.ndarray = np.array([p.yob for p in policies], dtype=np.int64)
         gender_array: np.ndarray = np.array([p.gender for p in policies])
 
         # Compute attained age for every (policy, year) combination at once.
@@ -75,9 +73,7 @@ class MortalityEngine:
 
         # Clamp age indices to [0, n_ages - 1] to avoid index-out-of-bounds errors.
         # Policies whose actual age exceeds the table will be corrected below.
-        age_index_clamped: np.ndarray = np.clip(
-            attained_age_matrix, 0, number_of_ages_in_table - 1
-        )
+        age_index_clamped: np.ndarray = np.clip(attained_age_matrix, 0, number_of_ages_in_table - 1)
 
         # Boolean masks to separate males and females for independent calculations
         is_male_mask: np.ndarray = gender_array == "M"
@@ -115,8 +111,8 @@ class MortalityEngine:
                 projection_years[np.newaxis, :] - MortalityTable.BASE_YEAR
             ).astype(np.float64)
             improvement_factor: np.ndarray = (
-                (1.0 - projection_scale[age_index]) ** years_since_base_year
-            )  # shape (n_group, n_years)
+                1.0 - projection_scale[age_index]
+            ) ** years_since_base_year  # shape (n_group, n_years)
 
             # Apply improvement to get the final mortality rate for each policy and year
             improved_mortality_rate: np.ndarray = (
@@ -136,8 +132,6 @@ class MortalityEngine:
             # np.cumprod computes the cumulative product along the year axis (axis=1):
             # tPx[t] = px[0] * px[1] * ... * px[t], matching the RnD loop that
             # multiplies cumulative_probability_of_survival_tPx *= px each year.
-            cumulative_survival_matrix[gender_mask] = np.cumprod(
-                probability_of_survival_px, axis=1
-            )
+            cumulative_survival_matrix[gender_mask] = np.cumprod(probability_of_survival_px, axis=1)
 
         return cumulative_survival_matrix

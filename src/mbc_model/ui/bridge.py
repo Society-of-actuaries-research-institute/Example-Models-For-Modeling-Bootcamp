@@ -14,6 +14,7 @@ from typing import Any, Callable
 
 from mbc_model.data.models import ModelResults
 from mbc_model.runner import run_with_results
+from mbc_model.ui.input_editor import InputEditError, save_input_copy, validate_input_changes
 from mbc_model.ui.preview import build_input_preview, build_output_preview
 
 RUN_LOG_COLUMNS = [
@@ -25,6 +26,8 @@ RUN_LOG_COLUMNS = [
     "output_file",
     "status",
 ]
+EXCEL_OPEN_FILE_FILTER = "Excel workbooks (*.xlsx)"
+EXCEL_SAVE_FILE_FILTER = "Excel workbook (*.xlsx)"
 
 
 class DesktopBridge:
@@ -35,10 +38,12 @@ class DesktopBridge:
         project_root: Path | None = None,
         runner: Callable[[Path], Path | tuple[Path, ModelResults]] | None = None,
         run_log_path: Path | None = None,
+        save_dialog: Callable[[Path], Path | str | None] | None = None,
     ) -> None:
         self._project_root = (project_root or Path.cwd()).resolve()
         self._runner = runner
         self._run_log_path = (run_log_path or self._project_root / "run_log.csv").resolve()
+        self._save_dialog = save_dialog
         self._window: Any = None
         self._lock = threading.Lock()
         self._started_at: float | None = None
@@ -68,7 +73,7 @@ class DesktopBridge:
             selected = self._window.create_file_dialog(
                 webview.OPEN_DIALOG,
                 allow_multiple=False,
-                file_types=("Excel workbooks (*.xlsm;*.xlsx)",),
+                file_types=(EXCEL_OPEN_FILE_FILTER,),
             )
         except Exception as exc:  # pragma: no cover - exercised through pywebview
             return self._error(f"Could not open file picker: {exc}")
@@ -89,8 +94,16 @@ class DesktopBridge:
             return self._error(f"Could not read input workbook: {exc}")
 
         with self._lock:
-            self._state["input_path"] = str(path)
-            self._state["error"] = ""
+            self._state.update(
+                {
+                    "status": "Ready",
+                    "runtime": "00:00:00",
+                    "input_path": str(path),
+                    "output_path": "",
+                    "output": None,
+                    "error": "",
+                }
+            )
             self._add_log_locked(f"Loaded workbook {path}", "Ready", input_path=str(path))
         return {"ok": True, "preview": preview, "status": self.get_run_status()}
 
@@ -158,6 +171,59 @@ class DesktopBridge:
             self._add_log_locked(f"Opened output workbook {path}", "Opened", output_path=str(path))
         return {"ok": True}
 
+    def save_input_changes(self, input_path: str, changes: dict[str, Any]) -> dict[str, Any]:
+        """Validate input edits, ask for a Save As path, and save an edited workbook copy."""
+        path = self._resolve_path(input_path)
+        if not path.exists():
+            return self._error(f"Input file not found: {path}")
+
+        validation = validate_input_changes(path, changes)
+        if not validation.ok:
+            with self._lock:
+                self._add_log_locked(
+                    f"Input save validation failed: {validation.errors[0]}",
+                    "Error",
+                    input_path=str(path),
+                )
+            return {
+                "ok": False,
+                "error": validation.errors[0],
+                "validation_errors": validation.errors,
+            }
+
+        try:
+            save_path = self._choose_save_path(path)
+            if save_path is None:
+                return {"ok": False, "cancelled": True}
+            output_path = save_input_copy(path, save_path, changes)
+            preview = build_input_preview(output_path)
+        except InputEditError as exc:
+            with self._lock:
+                self._add_log_locked(f"Input save failed: {exc}", "Error", input_path=str(path))
+            return self._error(str(exc))
+        except Exception as exc:
+            with self._lock:
+                self._add_log_locked(f"Input save failed: {exc}", "Error", input_path=str(path))
+            return self._error(f"Could not save input workbook: {exc}")
+
+        with self._lock:
+            self._state.update(
+                {
+                    "status": "Ready",
+                    "input_path": str(output_path),
+                    "output_path": "",
+                    "output": None,
+                    "error": "",
+                }
+            )
+            self._add_log_locked(
+                f"Saved edited input workbook {output_path}",
+                "Saved",
+                input_path=str(path),
+                output_path=str(output_path),
+            )
+        return {"ok": True, "preview": preview, "status": self.get_run_status()}
+
     def _run_model(self, input_path: Path) -> None:
         try:
             if self._runner is not None:
@@ -213,6 +279,39 @@ class DesktopBridge:
         if not path.is_absolute():
             path = self._project_root / path
         return path.resolve()
+
+    def _choose_save_path(self, source_path: Path) -> Path | None:
+        suggested_path = source_path.with_name(f"{source_path.stem} edited.xlsx")
+        if self._save_dialog is not None:
+            selected = self._save_dialog(suggested_path)
+            if not selected:
+                return None
+            save_path = Path(selected)
+            if save_path.suffix == "":
+                save_path = save_path.with_suffix(".xlsx")
+            return save_path.resolve()
+        if self._window is None:
+            raise InputEditError("Desktop window is not ready for Save As.")
+
+        try:
+            import webview  # type: ignore[import-not-found]
+
+            selected = self._window.create_file_dialog(
+                webview.SAVE_DIALOG,
+                save_filename=suggested_path.name,
+                file_types=(EXCEL_SAVE_FILE_FILTER,),
+            )
+        except Exception as exc:  # pragma: no cover - exercised through pywebview
+            raise InputEditError(f"Could not open Save As dialog: {exc}") from exc
+
+        if not selected:
+            return None
+        if isinstance(selected, (list, tuple)):
+            selected = selected[0]
+        save_path = Path(str(selected))
+        if save_path.suffix == "":
+            save_path = save_path.with_suffix(".xlsx")
+        return save_path.resolve()
 
     def _add_log_locked(
         self,

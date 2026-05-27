@@ -16,8 +16,8 @@ from mbc_model.runner import run, run_with_results
 from mbc_model.ui.preview import PREVIEW_LIMIT, build_input_preview, build_output_preview
 
 _ROOT = Path(__file__).parent.parent.parent
-_SMALL_SEED = _ROOT / "inputs" / "Input 10 pol 25 scen seed.xlsm"
-_LARGE_SEED = _ROOT / "inputs" / "Input 50k pol 10k scen seed.xlsm"
+_SMALL_SEED = _ROOT / "inputs" / "Input 10 pol 25 scen seed.xlsx"
+_LARGE_SEED = _ROOT / "inputs" / "Input 50k pol 10k scen seed.xlsx"
 
 
 @pytest.mark.skipif(not _SMALL_SEED.exists(), reason=f"Fixture workbook not found: {_SMALL_SEED}")
@@ -27,6 +27,9 @@ def test_input_preview_small_seed_workbook_counts_actual_records() -> None:
     assert preview["policy_count"] == 10
     assert preview["scenario_count"] == 25
     assert preview["random_numbers"] == "Seed"
+    assert preview["editable"]["inforce"]
+    assert preview["editable"]["parameters"]
+    assert preview["editable"]["reporting"]
     assert preview["inforce"]["shown_rows"] == 10
     assert not preview["inforce"]["has_more_rows"]
 
@@ -37,6 +40,8 @@ def test_input_preview_large_seed_workbook_is_capped() -> None:
 
     assert preview["policy_count"] == 50000
     assert preview["scenario_count"] == 10000
+    assert not preview["editable"]["inforce"]
+    assert "disabled" in preview["messages"]["inforce"]
     assert preview["inforce"]["shown_rows"] == PREVIEW_LIMIT
     assert preview["inforce"]["has_more_rows"]
     assert preview["parameters"]["random_numbers"]["rows"][0] == [

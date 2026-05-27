@@ -149,6 +149,30 @@ def build_input_preview(path: Path, limit: int = PREVIEW_LIMIT) -> dict[str, Any
         "projection_years": projection_end - projection_start + 1,
         "discount_rate": float(reporting.discount_rate),
         "random_numbers": random_source,
+        "editable": {
+            "inforce": len(policies) <= limit,
+            "parameters": True,
+            "reporting": True,
+            "random_numbers": (
+                random_number_table is not None
+                and int(random_number_table.shape[0]) < limit
+                and len(policies) < limit
+            ),
+        },
+        "messages": {
+            "inforce": (
+                ""
+                if len(policies) <= limit
+                else "Inforce editing is disabled for workbooks with more than 100 policies."
+            ),
+            "random_numbers": (
+                ""
+                if random_number_table is not None
+                and int(random_number_table.shape[0]) < limit
+                and len(policies) < limit
+                else "Random Numbers are editable only when scenarios and policies are both under 100."
+            ),
+        },
         "inforce": _table_payload(
             ["Policy #", "YOB", "Gender", "Annual Benefit"],
             inforce_rows,

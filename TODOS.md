@@ -37,6 +37,7 @@ the confusion.
 
 **Pros:** Better developer experience for students. No ambiguity about output location.
 
+
 **Cons:** Minor scope addition. Current CWD behavior is acceptable for a teaching tool.
 
 **Context:** Add to `runner.py`'s argument parser in Step 6. Default: `Path(".")`.

@@ -50,7 +50,7 @@ class ExcelLoader:
     All reading is read-only; the workbook is never modified.
 
     Args:
-        path: Path to the xlsm input file.
+        path: Path to the xlsx input file.
     """
 
     def __init__(self, path: Path) -> None:
@@ -75,7 +75,7 @@ class ExcelLoader:
         inforce_dataframe: pd.DataFrame = pd.read_excel(
             self._path,
             sheet_name="Inforce",
-            header=0,        # First row is the column header
+            header=0,  # First row is the column header
             engine="openpyxl",
         )
 
@@ -91,7 +91,9 @@ class ExcelLoader:
         rows_with_null_values = inforce_dataframe[list(required_columns)].isnull().any(axis=1)
         if rows_with_null_values.any():
             # idxmax() returns the index of the first True value (first row with a null)
-            excel_row_number: int = int(rows_with_null_values.idxmax()) + 2  # +1 header, +1 zero-index
+            excel_row_number: int = (
+                int(rows_with_null_values.idxmax()) + 2
+            )  # +1 header, +1 zero-index
             raise ValueError(
                 f"Inforce sheet row {excel_row_number}: null value in required column."
             )
@@ -152,10 +154,7 @@ class ExcelLoader:
         """
         # openpyxl opens the workbook in read-only, data-only mode for speed.
         # data_only=True returns cell values instead of formula strings.
-        # keep_vba=True preserves the macro code (required for .xlsm files).
-        workbook = openpyxl.load_workbook(
-            self._path, read_only=True, data_only=True, keep_vba=True
-        )
+        workbook = openpyxl.load_workbook(self._path, read_only=True, data_only=True)
         parameters_worksheet = workbook["Parameters"]
 
         # Accumulators for each table type found in the sheet
@@ -265,13 +264,9 @@ class ExcelLoader:
                     "Check that the table marker is present in column A."
                 )
         if not mortality_rate_rows:
-            raise KeyError(
-                "Parameters sheet: 'Mortality Rates' table not found or empty."
-            )
+            raise KeyError("Parameters sheet: 'Mortality Rates' table not found or empty.")
         if not improvement_scale_rows:
-            raise KeyError(
-                "Parameters sheet: 'Projection Scale' table not found or empty."
-            )
+            raise KeyError("Parameters sheet: 'Projection Scale' table not found or empty.")
 
         # Build the typed output objects from the accumulated data
         model_parameters: ModelParameters = ModelParameters(
@@ -326,9 +321,7 @@ class ExcelLoader:
         Raises:
             ValueError: If a required numeric field (e.g. Discount Rate) is absent.
         """
-        workbook = openpyxl.load_workbook(
-            self._path, read_only=True, data_only=True, keep_vba=True
-        )
+        workbook = openpyxl.load_workbook(self._path, read_only=True, data_only=True)
         reporting_worksheet = workbook["Reporting"]
 
         # Build a nested dictionary: {section_name: {field_name: value}}
@@ -370,18 +363,14 @@ class ExcelLoader:
             if value is None:
                 if default is not None:
                     return default
-                raise ValueError(
-                    f"Reporting sheet: '{section}' is missing required field '{key}'."
-                )
+                raise ValueError(f"Reporting sheet: '{section}' is missing required field '{key}'.")
             return int(value)  # type: ignore[arg-type]
 
         def _float_required(section: str, key: str) -> float:
             """Return the field value as a float; raise ValueError if missing."""
             value = report_section_data.get(section, {}).get(key)
             if value is None:
-                raise ValueError(
-                    f"Reporting sheet: '{section}' is missing required field '{key}'."
-                )
+                raise ValueError(f"Reporting sheet: '{section}' is missing required field '{key}'.")
             return float(value)  # type: ignore[arg-type]
 
         return ReportingConfig(

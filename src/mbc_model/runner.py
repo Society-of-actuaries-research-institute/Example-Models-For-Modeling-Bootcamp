@@ -13,7 +13,7 @@ Usage::
     from pathlib import Path
     from mbc_model.runner import run
 
-    out_path = run(Path("inputs/Interface_Example_v4.xlsm"))
+    out_path = run(Path("inputs/Input 10 pol 25 scen table.xlsx"))
     print(f"Results written to: {out_path}")
 """
 
@@ -39,7 +39,7 @@ def run(
     """Execute a complete model run and write the results workbook.
 
     Args:
-        input_path: Path to the xlsm input file.
+        input_path: Path to the xlsx input file.
         output_dir: Directory where the output xlsx file is written.
         verbose: If True, print step-by-step progress and timing to stdout.
 

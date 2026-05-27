@@ -13,16 +13,18 @@ import pytest
 
 from mbc_model.data.loader import ExcelLoader
 
-_DUMMY_PATH = Path("dummy.xlsm")
+_DUMMY_PATH = Path("dummy.xlsx")
 
 
 def _good_df() -> pd.DataFrame:
-    return pd.DataFrame({
-        "Policy #": [1, 2],
-        "YOB": [1951, 1950],
-        "Gender": ["M", "F"],
-        "Annual Benefit": [20000.0, 98000.0],
-    })
+    return pd.DataFrame(
+        {
+            "Policy #": [1, 2],
+            "YOB": [1951, 1950],
+            "Gender": ["M", "F"],
+            "Annual Benefit": [20000.0, 98000.0],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
