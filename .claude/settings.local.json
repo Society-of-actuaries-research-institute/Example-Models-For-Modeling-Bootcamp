@@ -51,7 +51,8 @@
       "Bash(findstr /i \"mkdocs\\\\|sphinx\\\\|docs\\\\|pdoc\")",
       "Bash(.venv/Scripts/python -m mkdocs --version)",
       "Bash(.venv/Scripts/python -c \"import mkdocstrings; print\\('installed'\\)\")",
-      "Bash(grep -E \"^\\\\\\\\.\")"
+      "Bash(grep -E \"^\\\\\\\\.\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\iniki\\\\MBC_Production_Model_Example\" -Force)"
     ]
   }
 }
