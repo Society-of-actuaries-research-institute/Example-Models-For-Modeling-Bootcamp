@@ -421,7 +421,7 @@ def print_dashboard_results_by_scenario(number_of_scenarios: int, number_of_poli
 # Generate output workbook as xlsx
 # =================================
 
-def generate_output_xlsx(runtime_seconds: float, output_dir: Path = Path("outputs")) -> Path:
+def generate_output_xlsx(start_time: float, output_dir: Path = Path("outputs")) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp_string = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = output_dir / f"rnd_results_{timestamp_string}.xlsx"
@@ -473,6 +473,7 @@ def generate_output_xlsx(runtime_seconds: float, output_dir: Path = Path("output
         assert pv_cash_flows_by_scenario is not None
         dashboard_scenarios = int(report_value("Dashboard Results", "Scenarios", number_of_scenarios))
         dashboard_policies = int(report_value("Dashboard Results", "Policies", number_of_policies))
+        runtime_seconds = time.time() - start_time
         write_dashboard_results_sheet(
             workbook,
             min(dashboard_scenarios, number_of_scenarios),
@@ -480,6 +481,7 @@ def generate_output_xlsx(runtime_seconds: float, output_dir: Path = Path("output
             discount_rate,
             runtime_seconds,
             total_results_by_scenario,
+            pv_cash_flows_by_scenario,
         )
 
     workbook.save(output_path)
@@ -560,7 +562,8 @@ def write_scenario_results_sheet(
 
     if str(report_value("Scenario Results", "Create graph?", "No")).strip().lower() == "yes":
         figure = make_scenario_results_figure(scenario_number, number_of_policies, scenario_results)
-        embed_chart(worksheet, figure, "A" + str(worksheet.max_row + 2))
+        if figure is not None:
+            embed_chart(worksheet, figure, "A" + str(worksheet.max_row + 2))
 
 
 def write_total_results_sheet(
@@ -600,10 +603,18 @@ def write_dashboard_results_sheet(
     discount_rate: float,
     runtime_seconds: float,
     total_results_by_scenario: list[dict[str, int]],
+    pv_cash_flows_by_scenario: dict[int, float] | None = None,
 ) -> None:
-    dashboard_results = calculate_dashboard_results_by_scenario(
-        number_of_scenarios, number_of_policies, discount_rate
-    )
+    assert pv_cash_flows_by_scenario is not None
+    pv_values = [pv_cash_flows_by_scenario[i] for i in range(1, number_of_scenarios + 1)]
+    mean_pv = sum(pv_values) / len(pv_values)
+    dashboard_results = {
+        "Mean_PV_Cash_Flow": mean_pv,
+        "Median_PV_Cash_Flow": sorted(pv_values)[len(pv_values) // 2],
+        "Std_Dev_PV_Cash_Flow": (sum((x - mean_pv) ** 2 for x in pv_values) / len(pv_values)) ** 0.5,
+        "Min_PV_Cash_Flow": min(pv_values),
+        "Max_PV_Cash_Flow": max(pv_values),
+    }
     total_runtime_seconds = int(runtime_seconds)
     runtime_formatted = (
         f"{total_runtime_seconds // 3600:02d}:"
@@ -629,8 +640,9 @@ def write_dashboard_results_sheet(
     )
 
     if str(report_value("Dashboard Results", "Create graph?", "No")).strip().lower() == "yes":
-        figure = make_dashboard_results_figure(number_of_scenarios, total_results_by_scenario)
-        embed_chart(worksheet, figure, "A" + str(worksheet.max_row + 2))
+        figure = make_dashboard_results_figure(number_of_scenarios, total_results_by_scenario, pv_cash_flows_by_scenario)
+        if figure is not None:
+            embed_chart(worksheet, figure, "A" + str(worksheet.max_row + 2))
 
 
 def make_scenario_results_figure(
@@ -661,16 +673,23 @@ def make_scenario_results_figure(
 def make_dashboard_results_figure(
     number_of_scenarios: int,
     total_results_by_scenario: list[dict[str, int]],
+    pv_cash_flows_by_scenario: dict[int, float] | None = None,
 ):
     years = [row["Year"] for row in total_results_by_scenario]
     figure, chart = plt.subplots(figsize=(10, 5))
 
-    for scenario_number in range(1, number_of_scenarios + 1):
-        cash_flows = [
-            row[f"Scenario_{scenario_number}"]
-            for row in total_results_by_scenario
-        ]
-        chart.plot(years, cash_flows, label=f"Scenario_{scenario_number}")
+    if number_of_scenarios > 25 and pv_cash_flows_by_scenario is not None:
+        pv_values = np.array([pv_cash_flows_by_scenario[i + 1] for i in range(number_of_scenarios)])
+        sorted_indices = np.argsort(pv_values)
+        positions = np.round(np.linspace(0, number_of_scenarios - 1, 11)).astype(int)
+        for pct_idx, scen_idx in enumerate(sorted_indices[positions]):
+            scen_num = int(scen_idx) + 1
+            cash_flows = [row[f"Scenario_{scen_num}"] for row in total_results_by_scenario]
+            chart.plot(years, cash_flows, label=f"Percentile_{pct_idx * 10}_Scenario_{scen_num}")
+    else:
+        for scenario_number in range(1, number_of_scenarios + 1):
+            cash_flows = [row[f"Scenario_{scenario_number}"] for row in total_results_by_scenario]
+            chart.plot(years, cash_flows, label=f"Scenario_{scenario_number}")
 
     chart.set_xlabel("Year")
     chart.set_ylabel("Cash Flow")
@@ -709,7 +728,7 @@ if __name__ == "__main__":
 
     try:
         load_input_workbook(input_file_path)
-        output_file_path = generate_output_xlsx(time.time() - start_time)
+        output_file_path = generate_output_xlsx(start_time)
     except Exception as error:
         print(f"Error: {error}")
         sys.exit(1)

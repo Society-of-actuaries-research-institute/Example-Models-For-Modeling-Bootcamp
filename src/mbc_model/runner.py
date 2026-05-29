@@ -56,6 +56,8 @@ def run_with_results(
     verbose: bool = True,
 ) -> tuple[Path, ModelResults]:
     """Execute a complete model run and return the workbook path plus results."""
+    run_start_time: float = time.perf_counter()
+
     # ------------------------------------------------------------------ inputs
     if verbose:
         print("Loading inputs...", flush=True)
@@ -119,9 +121,6 @@ def run_with_results(
 
     mortality_engine: MortalityEngine = MortalityEngine()
     projection_engine: ProjectionEngine = ProjectionEngine()
-
-    # Record overall start time to report total runtime at the end
-    run_start_time: float = time.perf_counter()
 
     # ------------------------------------------------------- cumulative survival
     if verbose:
