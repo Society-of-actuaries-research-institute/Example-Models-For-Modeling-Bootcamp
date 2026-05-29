@@ -171,6 +171,24 @@ class DesktopBridge:
             self._add_log_locked(f"Opened output workbook {path}", "Opened", output_path=str(path))
         return {"ok": True}
 
+    def open_docs(self) -> dict[str, Any]:
+        """Open the generated MkDocs site in the system browser."""
+        docs_path = self._project_root / "site" / "index.html"
+        if not docs_path.exists():
+            return self._error(
+                "Documentation not found. Run 'mkdocs build' to generate it."
+            )
+        try:
+            if os.name == "nt":
+                os.startfile(docs_path)
+            elif sys_platform() == "darwin":
+                subprocess.Popen(["open", str(docs_path)])
+            else:
+                subprocess.Popen(["xdg-open", str(docs_path)])
+        except Exception as exc:
+            return self._error(f"Could not open documentation: {exc}")
+        return {"ok": True}
+
     def save_input_changes(self, input_path: str, changes: dict[str, Any]) -> dict[str, Any]:
         """Validate input edits, ask for a Save As path, and save an edited workbook copy."""
         path = self._resolve_path(input_path)

@@ -768,12 +768,13 @@
   </style>
 </head>
 <body>
-  <div class="app-shell" role="application" aria-label="MBC model desktop mockup">
+  <div class="app-shell" role="application" aria-label="SOA Modeling Bootcamp production model example">
     <div class="toolbar">
       <nav class="tabs" aria-label="Main sections">
         <button class="tab" id="tab-inputs" aria-selected="true" data-screen="inputs-screen">Inputs</button>
         <button class="tab" id="tab-outputs" aria-selected="false" data-screen="outputs-screen">Outputs</button>
         <button class="tab" id="tab-log" aria-selected="false" data-screen="log-screen">Run Log</button>
+        <button class="tab" id="tab-docs" aria-selected="false">Documentation</button>
       </nav>
       <div class="toolbar-actions">
         <button class="btn primary" type="button" id="runButton">Run Model</button>
@@ -1487,7 +1488,7 @@
     }
 
     tabs.forEach((tab) => {
-      tab.addEventListener("click", () => showScreen(tab.dataset.screen));
+      if (tab.dataset.screen) tab.addEventListener("click", () => showScreen(tab.dataset.screen));
     });
 
     sheetTabs.forEach((tab) => {
@@ -2336,6 +2337,19 @@
         }, 1000);
       }
 
+      async function openDocs(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!bridgeReady()) {
+          statusText.textContent = "Opening documentation is available in the desktop app.";
+          return;
+        }
+        const response = await api().open_docs();
+        statusText.textContent = response.ok
+          ? "Opened documentation"
+          : (response.error || "Could not open documentation");
+      }
+
       async function openOutput(event) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -2367,6 +2381,7 @@
       }
 
       tabs.forEach((tab) => {
+        if (!tab.dataset.screen) return;
         tab.addEventListener("click", (event) => {
           event.stopImmediatePropagation();
           showScreen(tab.dataset.screen);
@@ -2389,6 +2404,7 @@
       document.getElementById("clearButton").addEventListener("click", clearWorkbook, true);
       runButton.addEventListener("click", startRun, true);
       openOutputButton.addEventListener("click", openOutput, true);
+      document.getElementById("tab-docs").addEventListener("click", openDocs, true);
       saveWorkbookButton.addEventListener("click", saveInputChanges, true);
       sheetContent.addEventListener("input", (event) => updatePendingChange(event.target), true);
       sheetContent.addEventListener("change", (event) => updatePendingChange(event.target), true);

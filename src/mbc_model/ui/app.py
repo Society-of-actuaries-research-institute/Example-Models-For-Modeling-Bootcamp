@@ -27,7 +27,7 @@ def main() -> None:
 
     bridge = DesktopBridge(project_root=_project_root())
     window = webview.create_window(
-        "MBC Production Model",
+        "SOA Modeling Bootcamp production model example",
         html_path.resolve().as_uri(),
         js_api=bridge,
         width=1240,
