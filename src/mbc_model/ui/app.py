@@ -21,7 +21,7 @@ def main() -> None:
             "Install the project dependencies, then run python -m mbc_model.ui again."
         ) from exc
 
-    html_path = _project_root() / "docs" / "mockups" / "desktop-ui-v1.html"
+    html_path = Path(__file__).parent / "app.html"
     if not html_path.exists():
         raise SystemExit(f"Desktop UI file not found: {html_path}")
 
