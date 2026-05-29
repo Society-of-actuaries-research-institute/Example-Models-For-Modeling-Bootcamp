@@ -27,6 +27,9 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}\\RnD_model.py",
+            "args": [
+                "inputs\\Input 10 pol 25 scen table.xlsx"
+            ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true

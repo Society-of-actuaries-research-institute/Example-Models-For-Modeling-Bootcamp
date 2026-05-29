@@ -232,16 +232,18 @@ Run the R&D model from the terminal.
 On Windows:
 
 ```powershell
-.\.venv\Scripts\python RnD_model.py
+.\.venv\Scripts\python RnD_model.py "inputs/Input 10 pol 25 scen table.xlsx"
 ```
 
 On macOS:
 
 ```bash
-.venv/bin/python RnD_model.py
+.venv/bin/python RnD_model.py "inputs/Input 10 pol 25 scen table.xlsx"
 ```
 
-The script prints result tables in the terminal and displays matplotlib graphs.
+The script reads the input workbook and writes a timestamped output workbook to
+`outputs/rnd_results_YYYYMMDD_HHMMSS.xlsx`. It only prints a short start and
+finish message in the terminal.
 
 ### 3. Production Desktop Interface
 

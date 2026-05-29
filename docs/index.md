@@ -4,13 +4,13 @@ Production-quality stochastic mortality cash flow model built for the SOA Modeli
 
 ## What this is
 
-A side-by-side contrast with `RnD_Model_example.py`:
+A side-by-side contrast with `RnD_model.py`:
 
 | | RnD model | Production model |
 |---|---|---|
 | Purpose | Explore and validate the math | Demonstrate engineering rigor |
 | Structure | Single script, procedural | Typed package, OOP, `src/` layout |
-| Scale | 10 policies × 25 scenarios | 100k policies × 10k scenarios |
+| Scale | Uses the class input workbooks | 100k policies × 10k scenarios |
 | Testing | None | pytest ≥90% coverage |
 | Type safety | None | mypy --strict |
 | CI/CD | None | GitHub Actions |
