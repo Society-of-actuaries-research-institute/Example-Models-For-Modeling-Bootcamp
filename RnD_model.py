@@ -5,11 +5,11 @@
 #  - installation of Python 3.10 or higher (download from https://www.python.org/downloads/)
 #  - installation of the required Python libraries
 
-#  Once Python and the required libraries are installed, you can run this script from command prompt, vs code, or any other Python IDE.
+#  Once Python and the required libraries are installed, you can run this script from command prompt, VS Code, or any other Python IDE.
 
 #  To run from Command Prompt:
 #  - navigate to the directory where this file is located (e.g., cd C:\Users\nikit\Desktop\Modeling Bootcamp)
-#  - run the command: python RnD_model.py "inputs/Input 10 pol 25 scen table.xlsx"
+#  - run the command: python RnD_model.py "C:\Users\nikit\Desktop\Modeling Bootcamp\inputs\Input 10 pol 25 scen table.xlsx"
 
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ import time
 Valuation_Date = None
 Last_Projection_Year = None
 
+# Stores the four fields we read from the Inforce sheet for each policy.
 @dataclass(frozen=True)
 class PolicyRecord:
     Policy: int
@@ -47,6 +48,7 @@ Random_Numbers_Seed = 1
 Reporting_Config = {}
 
 
+# Reads the Excel workbook and populates the global variables above.
 def load_input_workbook(input_path: Path) -> None:
     global Valuation_Date
     global Last_Projection_Year
@@ -139,6 +141,7 @@ def load_input_workbook(input_path: Path) -> None:
         if current_report and report_name is None and parameter_name is not None:
             Reporting_Config[current_report][str(parameter_name)] = parameter_value
 
+# Returns the random number for a (policy, scenario) pair — either from the pre-loaded table or generated from a seed.
 def get_random_number(policy_number: int, scenario_number: int) -> float:
     if Which_Random_Numbers.strip().lower() == "seed":
         random_number_generator = np.random.default_rng(Random_Numbers_Seed + policy_number - 1)
@@ -146,14 +149,17 @@ def get_random_number(policy_number: int, scenario_number: int) -> float:
     return float(Random_Numbers[scenario_number - 1][policy_number - 1])
 
 
+# Looks up a single parameter value from the Reporting configuration.
 def report_value(report_name: str, parameter_name: str, default):
     return Reporting_Config.get(report_name, {}).get(parameter_name, default)
 
 
+# Returns True if the given report tab is enabled in the Reporting sheet.
 def should_create_report(report_name: str) -> bool:
     return str(report_value(report_name, "Create?", "No")).strip().lower() == "yes"
 
 
+# Returns the total number of scenarios to run based on the input settings.
 def number_of_scenarios_to_run() -> int:
     if Which_Random_Numbers.strip().lower() == "table":
         return len(Random_Numbers)
@@ -164,6 +170,7 @@ def number_of_scenarios_to_run() -> int:
 # 2. Policy calculations for a given Scenario (Calculations tab in the workbook)
 # ==============================================================================
 
+# Projects a single policy across all years for one scenario. Returns a list of yearly results.
 def calculate_policy(policy_number: int, scenario_number: int) -> list[dict[str, int]]:
     policy = Inforce[policy_number - 1]
     random_number = get_random_number(policy_number, scenario_number)
@@ -208,22 +215,11 @@ def calculate_policy(policy_number: int, scenario_number: int) -> list[dict[str,
 
     return policy_results
 
-# =============================================
-# Print results for a given policy and scenario
-# =============================================
-
-def print_policy_results(policy_number: int, scenario_number: int) -> None:
-    policy_results = calculate_policy(policy_number, scenario_number)
-    headers = list(policy_results[0].keys())
-    print("\nPolicy Results for Policy Number:", policy_number, "and Scenario Number:", scenario_number)
-    print("\t".join(headers))
-    for row in policy_results:
-        print("\t".join(str(row[header]) for header in headers))
-
 # ==============================================
 # 3. Calculate Scenario Results for all policies
 # ==============================================
 
+# Aggregates cash flows across all policies for one scenario. Returns yearly totals and per-policy breakdowns.
 def calculate_scenario_cash_flows(
     scenario_number: int, number_of_policies: int
 ) -> list[dict[str, int]]:
@@ -254,55 +250,11 @@ def calculate_scenario_cash_flows(
     
     return scenario_results
 
-# =======================================
-# Print scenario results for all policies
-# =======================================
-
-def print_scenario_results(
-    scenario_number: int, number_of_policies: int
-) -> None:
-    
-    scenario_results = calculate_scenario_cash_flows(scenario_number, number_of_policies)
-
-    headers = ["Year"] + [
-        f"Policy_{policy_number}"
-        for policy_number in range(1, number_of_policies + 1)
-    ] + ["Total"]
-    print("\nScenario Results for Scenario Number:", scenario_number)
-    print("\t".join(headers))
-    for row in scenario_results:
-        print("\t".join(str(row[header]) for header in headers))
-
-# ==========================================
-# Plot scenario results for all policies
-# ==========================================
-
-def plot_scenario_results(scenario_number: int, number_of_policies: int) -> None:
-    scenario_results = calculate_scenario_cash_flows(scenario_number, number_of_policies)
-    years = [row["Year"] for row in scenario_results]
-    policy_cash_flows = {
-        f"Policy_{policy_number}": [row[f"Policy_{policy_number}"] for row in scenario_results]
-        for policy_number in range(1, number_of_policies + 1)
-    }
-    total_cash_flows = [row["Total"] for row in scenario_results]
-
-    bottom = [0] * len(years)
-    for policy_number in range(1, number_of_policies + 1):
-        policy_label = f"Policy_{policy_number}"
-        plt.bar(years, policy_cash_flows[policy_label], bottom=bottom, label=policy_label)
-        bottom = [bottom[i] + policy_cash_flows[policy_label][i] for i in range(len(bottom))]
-
-    plt.plot(years, total_cash_flows, color="black", marker="o", linestyle="--", label="Total")
-    plt.xlabel("Year")
-    plt.ylabel("Cash Flow")
-    plt.title(f"Scenario {scenario_number} Cash Flows by Policy")
-    plt.legend()
-    plt.show()
-
 # ======================================
 # 4. Calculate Total Results by Scenario
 # ======================================
 
+# Runs all scenarios and collects total annual cash flows in a table with one column per scenario.
 def calculate_total_results_by_scenario(number_of_scenarios: int, number_of_policies: int) -> list[dict[str, int]]:
     scenario_cash_flows = {
         scenario_number: calculate_scenario_cash_flows(scenario_number, number_of_policies)
@@ -320,41 +272,11 @@ def calculate_total_results_by_scenario(number_of_scenarios: int, number_of_poli
     
     return total_results_by_scenario
 
-# ==============================
-# Print results across scenarios
-# ==============================
-
-def print_results_across_scenarios(number_of_scenarios: int, number_of_policies: int) -> None:
-    total_results_by_scenario = calculate_total_results_by_scenario(number_of_scenarios, number_of_policies)
-
-    headers = ["Year"] + [
-        f"Scenario_{scenario_number}"
-        for scenario_number in range(1, number_of_scenarios + 1)
-    ]
-    print("\nResults Across Scenarios:")
-    print("\t".join(headers))
-    for row in total_results_by_scenario:
-        print("\t".join(str(row[header]) for header in headers))
-
-# ===========================
-# Plot cash flows by scenario
-# ===========================
-def plot_cash_flows_by_scenario(number_of_scenarios: int, number_of_policies: int) -> None:
-    cash_flows_by_scenario = calculate_total_results_by_scenario(number_of_scenarios, number_of_policies)
-    years = [row["Year"] for row in cash_flows_by_scenario]
-    for scenario_number in range(1, number_of_scenarios + 1):
-        pv_cash_flows = [row[f"Scenario_{scenario_number}"] for row in cash_flows_by_scenario]
-        plt.plot(years, pv_cash_flows, label=f"Scenario_{scenario_number}")
-    plt.xlabel("Year")
-    plt.ylabel("PV Cash Flow")
-    plt.title("Cash Flow Projection by Scenario")
-    plt.legend()
-    plt.show()
-
 # ======================================
 # 5. Calculate PV Cash Flows by Scenario
 # ======================================
 
+# Discounts each scenario's cash flows to a present value using the given discount rate.
 def calculate_pv_cash_flows_by_scenario(number_of_scenarios: int, number_of_policies: int, discount_rate: float) -> dict[int]:
     total_results_by_scenario = calculate_total_results_by_scenario(number_of_scenarios, number_of_policies)
     pv_cash_flows_by_scenario = {}
@@ -369,58 +291,11 @@ def calculate_pv_cash_flows_by_scenario(number_of_scenarios: int, number_of_poli
         pv_cash_flows_by_scenario[scenario_number] = pv_cash_flows
     return pv_cash_flows_by_scenario
 
-# ===============================
-# Print PV cash flows by scenario
-# ===============================
-
-def print_pv_cash_flows_by_scenario(number_of_scenarios: int, number_of_policies: int, discount_rate: float) -> None:
-    pv_cash_flows_by_scenario = calculate_pv_cash_flows_by_scenario(
-        number_of_scenarios, number_of_policies, discount_rate
-    )
-    print("\nPV of Cash Flows by Scenario:")
-    print("Scenario\tPV_Cash_Flow")
-    for scenario_number, pv_cash_flow in pv_cash_flows_by_scenario.items():
-        print(f"Scenario_{scenario_number}\t{pv_cash_flow:.2f}")
-
-# ================================================
-# Calculate the dashboard results across scenarios
-# ================================================
-
-def calculate_dashboard_results_by_scenario(number_of_scenarios: int, number_of_policies: int, discount_rate: float) -> dict[str, float]:
-    pv_cash_flows_by_scenario = calculate_pv_cash_flows_by_scenario(
-        number_of_scenarios, number_of_policies, discount_rate
-    )
-    pv_cash_flow_values = list(pv_cash_flows_by_scenario.values())
-    mean_pv_cash_flow = sum(pv_cash_flow_values) / len(pv_cash_flow_values)
-    median_pv_cash_flow = sorted(pv_cash_flow_values)[len(pv_cash_flow_values) // 2]
-    std_dev_pv_cash_flow = (sum((x - mean_pv_cash_flow) ** 2 for x in pv_cash_flow_values) / len(pv_cash_flow_values)) ** 0.5
-    min_pv_cash_flow = min(pv_cash_flow_values)
-    max_pv_cash_flow = max(pv_cash_flow_values)
-
-    return {
-        "Mean_PV_Cash_Flow": mean_pv_cash_flow,
-        "Median_PV_Cash_Flow": median_pv_cash_flow,
-        "Std_Dev_PV_Cash_Flow": std_dev_pv_cash_flow,
-        "Min_PV_Cash_Flow": min_pv_cash_flow,
-        "Max_PV_Cash_Flow": max_pv_cash_flow,
-    }
-
-#=========================================
-# Print dashboard results across scenarios
-#=========================================
-
-def print_dashboard_results_by_scenario(number_of_scenarios: int, number_of_policies: int, discount_rate: float) -> None:
-    dashboard_results = calculate_dashboard_results_by_scenario(
-        number_of_scenarios, number_of_policies, discount_rate
-    )
-    print("\nDashboard Results:")
-    for key, value in dashboard_results.items():
-        print(f"{key}: {value:.2f}")
-
 # =================================
-# Generate output workbook as xlsx
+# 6. Generate output workbook as xlsx
 # =================================
 
+# Creates the output Excel workbook and writes whichever sheets are enabled in the Reporting tab.
 def generate_output_xlsx(start_time: float, output_dir: Path = Path("outputs")) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp_string = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -488,6 +363,7 @@ def generate_output_xlsx(start_time: float, output_dir: Path = Path("outputs")) 
     return output_path.resolve()
 
 
+# Writes the Policy Results sheet for one selected policy and scenario.
 def write_policy_results_sheet(
     workbook: openpyxl.Workbook, policy_number: int, scenario_number: int
 ) -> None:
@@ -534,6 +410,7 @@ def write_policy_results_sheet(
         )
 
 
+# Writes the Scenario Results sheet showing cash flows by policy for one scenario.
 def write_scenario_results_sheet(
     workbook: openpyxl.Workbook,
     scenario_number: int,
@@ -566,6 +443,7 @@ def write_scenario_results_sheet(
             embed_chart(worksheet, figure, "A" + str(worksheet.max_row + 2))
 
 
+# Writes the Total Results sheet with cash flows and present values across all scenarios.
 def write_total_results_sheet(
     workbook: openpyxl.Workbook,
     number_of_scenarios: int,
@@ -596,6 +474,7 @@ def write_total_results_sheet(
             )
 
 
+# Writes the Dashboard Results sheet with summary statistics across scenarios.
 def write_dashboard_results_sheet(
     workbook: openpyxl.Workbook,
     number_of_scenarios: int,
@@ -645,6 +524,7 @@ def write_dashboard_results_sheet(
             embed_chart(worksheet, figure, "A" + str(worksheet.max_row + 2))
 
 
+# Builds a stacked bar chart of cash flows by policy for one scenario.
 def make_scenario_results_figure(
     scenario_number: int,
     number_of_policies: int,
@@ -670,6 +550,7 @@ def make_scenario_results_figure(
     return figure
 
 
+# Builds a line chart of cash flows across scenarios (downsampled to 11 percentile lines when there are more than 25 scenarios).
 def make_dashboard_results_figure(
     number_of_scenarios: int,
     total_results_by_scenario: list[dict[str, int]],
@@ -699,6 +580,7 @@ def make_dashboard_results_figure(
     return figure
 
 
+# Saves a matplotlib chart as a PNG image and embeds it in the worksheet at the given cell position.
 def embed_chart(worksheet, figure, anchor: str) -> None:
     image_buffer = io.BytesIO()
     figure.savefig(image_buffer, format="png", dpi=100)
