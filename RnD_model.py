@@ -1,4 +1,4 @@
-# R&D Model Example for SOA Modeling Bootcamp 2026
+# R&D Python Script model example for SOA Modeling Bootcamp 2026
 # Written by Igor Nikitin, ASA, MAAA
 
 # To run this script you will need:
@@ -8,7 +8,7 @@
 #  Once Python and the required libraries are installed, you can run this script from command prompt, VS Code, or any other Python IDE.
 
 #  To run from Command Prompt:
-#  - navigate to the directory where this file is located (e.g., cd C:\Users\nikit\Desktop\Modeling Bootcamp)
+#  - navigate to the directory where this file is located: cd "C:\Users\nikit\Desktop\Modeling Bootcamp"
 #  - run the command: python RnD_model.py "C:\Users\nikit\Desktop\Modeling Bootcamp\inputs\Input 10 pol 25 scen table.xlsx"
 
 from __future__ import annotations
@@ -24,9 +24,9 @@ from pathlib import Path
 import sys
 import time
 
-# =========
-# 1. Inputs
-# =========
+# ==================
+# 1. Read the inputs
+# ==================
 
 Valuation_Date = None
 Last_Projection_Year = None
@@ -588,9 +588,9 @@ def embed_chart(worksheet, figure, anchor: str) -> None:
     image_buffer.seek(0)
     worksheet.add_image(XlImage(image_buffer), anchor)
 
-# ==========================================================
-# Main execution function to run the model and print results
-# ==========================================================
+# =============================================================
+# 7. Main execution function to run the model and print results
+# =============================================================
 
 if __name__ == "__main__":
 
