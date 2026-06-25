@@ -29,6 +29,7 @@ from mbc_model.reporting.charts import (
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+    from openpyxl.worksheet.worksheet import Worksheet
 
 
 class ReportWriter:
@@ -259,7 +260,7 @@ class ReportWriter:
 
     @staticmethod
     def _embed_chart(
-        worksheet: openpyxl.worksheet.worksheet.Worksheet,
+        worksheet: "Worksheet",
         figure: "Figure",
         anchor: str,
     ) -> None:

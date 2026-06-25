@@ -14,7 +14,7 @@ def _project_root() -> Path:
 def main() -> None:
     """Open the HTML desktop UI in a native pywebview window."""
     try:
-        import webview  # type: ignore[import-not-found]
+        import webview  # type: ignore[import-not-found, unused-ignore]
     except ImportError as exc:  # pragma: no cover - depends on optional GUI install
         raise SystemExit(
             "pywebview is required for the desktop UI. "

@@ -18,6 +18,7 @@ underlying random numbers.
 from __future__ import annotations
 
 import numpy as np
+from typing import cast
 
 from mbc_model.data.models import MortalityTable, PolicyDetail, PolicyRecord
 
@@ -145,7 +146,7 @@ class ProjectionEngine:
 
         # @ is matrix multiplication: (n_scenarios, n_years) @ (n_years,) → (n_scenarios,).
         # Each scenario's PV = dot product of its annual cash flows with the discount factors.
-        return scenario_cash_flows @ discount_factors_by_year
+        return cast(np.ndarray, scenario_cash_flows @ discount_factors_by_year)
 
     def build_policy_detail(
         self,

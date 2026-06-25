@@ -32,6 +32,9 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+mbc_model = ["py.typed", "ui/app.html"]
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]
@@ -40,6 +43,7 @@ target-version = ["py311"]
 strict = true
 python_version = "3.11"
 files = ["src"]
+namespace_packages = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

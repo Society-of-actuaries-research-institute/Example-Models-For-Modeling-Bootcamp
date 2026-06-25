@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
+from typing import TYPE_CHECKING
 
 import matplotlib
 import numpy as np
@@ -16,10 +17,13 @@ import matplotlib.pyplot as plt  # pylint: disable=wrong-import-position
 
 from mbc_model.data.models import ModelResults, PolicyRecord
 
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
+
 GRAPH_NOT_REQUESTED_MESSAGE = "Graph was not requested in the Reporting tab."
 
 
-def make_scenario_cash_flows_chart(results: ModelResults) -> "plt.Figure | None":
+def make_scenario_cash_flows_chart(results: ModelResults) -> "Figure | None":
     """Build the Scenario Results graph when requested by ReportingConfig."""
     if not results.config.create_scenario_graph:
         return None
@@ -38,7 +42,7 @@ def make_scenario_cash_flows_chart(results: ModelResults) -> "plt.Figure | None"
     )
 
 
-def make_dashboard_cash_flow_chart(results: ModelResults) -> "plt.Figure | None":
+def make_dashboard_cash_flow_chart(results: ModelResults) -> "Figure | None":
     """Build the Dashboard Results graph when requested by ReportingConfig."""
     if not results.config.create_dashboard_graph or results.pv_by_scenario is None:
         return None
@@ -69,7 +73,7 @@ def make_stacked_bar_chart(
     total_cash_flow: np.ndarray,
     policies: list[PolicyRecord],
     title: str,
-) -> "plt.Figure":
+) -> "Figure":
     """Build a stacked bar chart with one bar segment per policy and a total line."""
     figure, chart_axes = plt.subplots(figsize=(10, 5))
 
@@ -105,7 +109,7 @@ def make_scenario_lines_chart(
     projection_years: np.ndarray,
     scenario_cash_flows: np.ndarray,
     selected_indices: "np.ndarray | None" = None,
-) -> "plt.Figure":
+) -> "Figure":
     """Build a line chart with one line per scenario over the projection years."""
     figure, chart_axes = plt.subplots(figsize=(10, 5))
 
@@ -135,7 +139,7 @@ def make_scenario_lines_chart(
     return figure
 
 
-def figure_to_png_bytes(figure: "plt.Figure") -> bytes:
+def figure_to_png_bytes(figure: "Figure") -> bytes:
     """Render a figure to PNG bytes and close it."""
     image_buffer = io.BytesIO()
     figure.savefig(image_buffer, format="png", dpi=100)
@@ -144,7 +148,7 @@ def figure_to_png_bytes(figure: "plt.Figure") -> bytes:
     return image_buffer.read()
 
 
-def figure_to_data_url(figure: "plt.Figure") -> str:
+def figure_to_data_url(figure: "Figure") -> str:
     """Render a figure to a browser-displayable PNG data URL."""
     encoded = base64.b64encode(figure_to_png_bytes(figure)).decode("ascii")
     return f"data:image/png;base64,{encoded}"

@@ -99,8 +99,7 @@ class ExcelLoader:
             )
 
         inforce_policies: list[PolicyRecord] = []
-        for row_index, row in inforce_dataframe.iterrows():
-            excel_row_number = int(row_index) + 2  # type: ignore[arg-type]
+        for excel_row_number, (_, row) in enumerate(inforce_dataframe.iterrows(), start=2):
 
             gender_value: str = str(row["Gender"]).strip()
             if gender_value not in _VALID_GENDERS:
@@ -192,7 +191,7 @@ class ExcelLoader:
                     parser_state = STATE_IDLE
 
                 elif table_name_column == "Last Projection Year":
-                    scalar_parameters["last_projection_year"] = int(value_column)  # type: ignore[arg-type]
+                    scalar_parameters["last_projection_year"] = int(value_column)
                     parser_state = STATE_IDLE
 
                 elif table_name_column == "Which Random Numbers?":
@@ -204,7 +203,7 @@ class ExcelLoader:
                     parser_state = STATE_IDLE
 
                 elif table_name_column == "Random Numbers Seed":
-                    scalar_parameters["random_seed"] = int(value_column)  # type: ignore[arg-type]
+                    scalar_parameters["random_seed"] = int(value_column)
                     parser_state = STATE_IDLE
 
                 elif table_name_column == "Mortality Rates":
@@ -364,14 +363,14 @@ class ExcelLoader:
                 if default is not None:
                     return default
                 raise ValueError(f"Reporting sheet: '{section}' is missing required field '{key}'.")
-            return int(value)  # type: ignore[arg-type]
+            return int(value)
 
         def _float_required(section: str, key: str) -> float:
             """Return the field value as a float; raise ValueError if missing."""
             value = report_section_data.get(section, {}).get(key)
             if value is None:
                 raise ValueError(f"Reporting sheet: '{section}' is missing required field '{key}'.")
-            return float(value)  # type: ignore[arg-type]
+            return float(value)
 
         return ReportingConfig(
             create_policy_results=_bool("Policy Results", "Create?"),

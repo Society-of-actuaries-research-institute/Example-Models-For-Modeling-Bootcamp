@@ -68,7 +68,7 @@ class DesktopBridge:
             return self._error("Desktop window is not ready.")
 
         try:
-            import webview  # type: ignore[import-not-found]
+            import webview  # type: ignore[import-not-found, unused-ignore]
 
             selected = self._window.create_file_dialog(
                 webview.OPEN_DIALOG,
@@ -158,12 +158,7 @@ class DesktopBridge:
             return self._error(f"Output file not found: {path}")
 
         try:
-            if os.name == "nt":
-                os.startfile(path)
-            elif sys_platform() == "darwin":
-                subprocess.Popen(["open", str(path)])
-            else:
-                subprocess.Popen(["xdg-open", str(path)])
+            _open_path(path)
         except Exception as exc:  # pragma: no cover - platform shell behavior
             return self._error(f"Could not open output file: {exc}")
 
@@ -177,12 +172,7 @@ class DesktopBridge:
         if not docs_path.exists():
             return self._error("Documentation not found. Run 'mkdocs build' to generate it.")
         try:
-            if os.name == "nt":
-                os.startfile(docs_path)
-            elif sys_platform() == "darwin":
-                subprocess.Popen(["open", str(docs_path)])
-            else:
-                subprocess.Popen(["xdg-open", str(docs_path)])
+            _open_path(docs_path)
         except Exception as exc:
             return self._error(f"Could not open documentation: {exc}")
         return {"ok": True}
@@ -310,7 +300,7 @@ class DesktopBridge:
             raise InputEditError("Desktop window is not ready for Save As.")
 
         try:
-            import webview  # type: ignore[import-not-found]
+            import webview  # type: ignore[import-not-found, unused-ignore]
 
             selected = self._window.create_file_dialog(
                 webview.SAVE_DIALOG,
@@ -381,6 +371,19 @@ def _format_runtime(seconds: float) -> str:
         f"{(total_seconds % 3600) // 60:02d}:"
         f"{total_seconds % 60:02d}"
     )
+
+
+def _open_path(path: Path) -> None:
+    """Open a file or URL path with the operating system default handler."""
+    if os.name == "nt":
+        startfile = getattr(os, "startfile", None)
+        if startfile is None:
+            raise OSError("os.startfile is not available on this platform.")
+        startfile(path)
+    elif sys_platform() == "darwin":
+        subprocess.Popen(["open", str(path)])
+    else:
+        subprocess.Popen(["xdg-open", str(path)])
 
 
 def sys_platform() -> str:
