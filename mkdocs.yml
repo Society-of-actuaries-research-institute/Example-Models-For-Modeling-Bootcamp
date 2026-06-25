@@ -1,5 +1,5 @@
 site_name: MBC Production Model
-site_description: Production-quality actuarial cash flow model — SOA Modeling Bootcamp 2026
+site_description: Production-quality actuarial cash flow model illustration for the SOA Modeling Bootcamp
 
 docs_dir: docs
 use_directory_urls: false
@@ -23,6 +23,12 @@ plugins:
 
 nav:
   - Home: index.md
+  - Actuarial Calculations: calculations.md
+  - Install & Run: install-run.md
+  - Inputs & Outputs: inputs-outputs.md
+  - Governance & Limitations: governance-limitations.md
+  - Testing & Sign-Offs: testing-signoffs.md
+  - License: license.md
   - API Reference:
       - Data Models: api/models.md
       - Excel Loader: api/loader.md
