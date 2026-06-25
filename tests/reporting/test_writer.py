@@ -17,7 +17,6 @@ from mbc_model.data.models import (
 )
 from mbc_model.reporting.writer import ReportWriter
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

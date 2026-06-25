@@ -8,7 +8,6 @@ import pytest
 from mbc_model.data.models import MortalityTable, PolicyRecord
 from mbc_model.engine.mortality import MortalityEngine
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

@@ -175,9 +175,7 @@ class DesktopBridge:
         """Open the generated MkDocs site in the system browser."""
         docs_path = self._project_root / "site" / "index.html"
         if not docs_path.exists():
-            return self._error(
-                "Documentation not found. Run 'mkdocs build' to generate it."
-            )
+            return self._error("Documentation not found. Run 'mkdocs build' to generate it.")
         try:
             if os.name == "nt":
                 os.startfile(docs_path)
