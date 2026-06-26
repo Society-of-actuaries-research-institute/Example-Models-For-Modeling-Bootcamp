@@ -25,8 +25,8 @@ symbols such as `$` or `>`.
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/<your-org>/mbc-production-model-example.git
-cd mbc-production-model-example
+git clone https://github.com/Society-of-actuaries-research-institute/Example-Models-For-Modeling-Bootcamp.git
+cd Example-Models-For-Modeling-Bootcamp
 python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\python -m pip install -e .
@@ -35,8 +35,8 @@ python -m venv .venv
 macOS Terminal:
 
 ```bash
-git clone https://github.com/<your-org>/mbc-production-model-example.git
-cd mbc-production-model-example
+git clone https://github.com/Society-of-actuaries-research-institute/Example-Models-For-Modeling-Bootcamp.git
+cd Example-Models-For-Modeling-Bootcamp
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -e .

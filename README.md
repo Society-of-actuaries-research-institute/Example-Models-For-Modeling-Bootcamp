@@ -1,216 +1,97 @@
-# MBC Production Model Example
+# SOA Modeling Bootcamp example models
 
-This repository is a class illustration for the SOA Modeling Bootcamp. It
-shows how the same actuarial model can evolve from a quick prototype, to an R&D
-script, to production-style software.
+This repository is a class illustration for the SOA Modeling Bootcamp. It shows
+how the same actuarial model can evolve from a quick spreadsheet prototype, to a
+simple Python R&D script, to production-style Python software.
 
 The model projects stochastic mortality cash flows for annuity policies, then
-summarizes present values across scenarios. The point of the project is not
-the actuarial math, but the engineering journey.
+summarizes present values across scenarios. The point of the project is not the
+actuarial math itself, but the engineering journey: how model structure,
+testing, documentation, user interfaces, and repeatable runs change as a model
+moves toward production quality.
 
-> This project is for teaching. It may contain bugs and deliberate simplifications.
-> Do not use it for real world applications.
+| Stage | File or folder | What to focus on |
+|-------|----------------|------------------|
+| Excel prototype | `Prototype_model.xlsm` | The easiest place to inspect the model logic in a familiar spreadsheet. |
+| Python R&D script | `RnD_model.py` | A simple Python version that stays close to the spreadsheet logic. |
+| Production software | `src/mbc_model/` | The engineered version with a desktop UI, command-line interface, tests, documentation, input validation, and Excel output generation. |
 
-## Start Here
+If you are new to programming, do not try to understand every folder at once.
+Use the Excel prototype first, then run the R&D script, then use the production
+desktop interface.
 
-If you are new to code repositories, do not try to understand every folder at
-once. Start with these files:
-
-1. `Prototype_model.xlsm`
-   The Excel prototype. This is the fastest and most familiar way to explore the
-   model logic.
-
-2. `RnD_model.py`
-   The Python R&D model. This moves the same logic into a simple Python script
-   while keeping the structure close to the Excel prototype. The main advantage
-   of this model is execution speed.
-
-3. `src/mbc_model/`
-   The "production" model package. This is the engineered version with a desktop
-   interface, command-line interface, tests, documentation, input validation, and
-   Excel output generation.
-
-The production model intentionally has more folders and files. That extra
-structure is part of what makes software easier to test, maintain, document, and
-share.
-
-## The Three Model Stages
-
-| Stage | File or folder | Purpose |
-|-------|----------------|---------|
-| Excel prototype | `Prototype_model.xlsm` | Explore the model logic quickly in a familiar spreadsheet environment. |
-| Python R&D script | `RnD_model.py` | The simplest possible upgrade from Excel prototype in terms of speed, but a downgrade in terms of transparency for non-programmer users. |
-| Production software | `src/mbc_model/` | Demonstrate a maintainable application with UI, tests, docs, and reusable APIs. |
-
-All three models contain the same exact logic and solve the same core problem.
-The difference is how much engineering structure surrounds the calculations.
-
-## What the Other Folders Are
-
-| Path | What it is for |
-|------|----------------|
-| `inputs/` | Sample Excel input workbooks for the production and R&D models. |
-| `outputs/` | Generated result workbooks from production and R&D model runs. |
-| `tests/` | Automated checks that protect the production model from regressions. |
-| `docs/` | Source files for the documentation site. |
-| `pyproject.toml` | Python project configuration and dependency list. |
-| `.github/`, `.vscode/`, `.claude/` | Development, automation, and local tool configuration. |
-
-## Requirements
-
-- Windows 10+ or macOS 12+
-- Microsoft Excel to be able to run the macro in `Prototype_model.xlsm`
-- Python 3.11 or newer
-- Git, so you can download the project with `git clone`
-- VS Code, which is the editor used in class demos
-- OpenAI Codex, optional but used in class demos
-- About 300 MB of disk space for Python dependencies
+> This project is for teaching. It may contain bugs and deliberate
+> simplifications. Do not use it for real world applications.
 
 ## Installation
 
-### What "Terminal" Means
+The intended setup path for this class is to use VS Code with OpenAI Codex.
+Codex can help install Python, Git, dependencies, and the project itself.
 
-A terminal is a text window where you type commands and press **Enter**.
+### Step 1: Install VS Code
 
-On Windows, use **PowerShell**:
+Install Visual Studio Code from:
 
-1. Click the Windows Start button.
-2. Type `PowerShell`.
-3. Open **Windows PowerShell**.
+<https://code.visualstudio.com/>
 
-On macOS, use **Terminal**:
+Open VS Code after it is installed.
 
-1. Press **Command + Space**.
-2. Type `Terminal`.
-3. Open **Terminal**.
+### Step 2: Install OpenAI Codex In VS Code
 
-Type commands one line at a time. Do not type the `$`, `>`, or other prompt
-symbols if your terminal shows them.
+In VS Code:
 
-### Install Required Tools
+1. Open **Extensions**.
+2. Search for **Codex - OpenAI's coding agent**.
+3. Install **Codex - OpenAI's coding agent** from OpenAI.
+4. Sign in when prompted.
 
-#### Windows
+### Step 3: Ask Codex To Install The Project
 
-1. Install Python from <https://www.python.org/downloads/>.
-   During installation, check **Add python.exe to PATH**.
-2. Install Git from <https://git-scm.com/download/win>.
-3. Install Visual Studio Code from <https://code.visualstudio.com/>.
-4. Open VS Code, go to **Extensions**, and install the **Python** extension from
-   Microsoft and Codex - OpenAI's coding agent extension from OpenAI.
-5. Optional for class demos: install Node.js LTS from <https://nodejs.org/>, then
-   install Codex CLI:
-
-   ```powershell
-   npm install -g @openai/codex
-   codex --login
-   ```
-
-   If PowerShell says `codex.ps1` is not digitally signed, run `codex.cmd`
-   instead of `codex`, or open **Command Prompt** for the Codex command.
-
-Check that the tools are installed:
-
-```powershell
-python --version
-git --version
-code --version
-npm --version
-```
-
-#### macOS
-
-1. Install Python from <https://www.python.org/downloads/>.
-2. Install Git. If `git --version` asks to install Apple Command Line Tools,
-   approve the prompt. You can also start that install manually:
-
-   ```bash
-   xcode-select --install
-   ```
-
-3. Install Visual Studio Code from <https://code.visualstudio.com/>.
-4. Open VS Code, go to **Extensions**, and install the **Python** extension from
-   Microsoft and Codex - OpenAI's coding agent extension from OpenAI.
-5. Optional for class demos: install Node.js LTS from <https://nodejs.org/>, then
-   install Codex CLI:
-
-   ```bash
-   npm install -g @openai/codex
-   codex --login
-   ```
-
-Check that the tools are installed:
-
-```bash
-python3 --version
-git --version
-code --version
-npm --version
-```
-
-OpenAI's current Codex CLI setup uses `npm install -g @openai/codex` followed by
-`codex --login`. Because Codex changes over time, follow the latest OpenAI setup
-prompts if they differ from these notes. The OpenAI setup guide is here:
-<https://help.openai.com/en/articles/11381614-api-codex-cli-and-sign-in-with-chatgpt>.
-
-### Download and Install This Project
-
-#### Windows
-
-Open **PowerShell**:
-
-```powershell
-git clone https://github.com/<your-org>/mbc-production-model-example.git
-cd mbc-production-model-example
-python -m venv .venv
-.\.venv\Scripts\python -m pip install --upgrade pip
-.\.venv\Scripts\python -m pip install -e .
-```
-
-If `python` is not recognized, try `py`:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python -m pip install --upgrade pip
-.\.venv\Scripts\python -m pip install -e .
-```
-
-To install developer tools for tests, linting, and documentation:
-
-```powershell
-.\.venv\Scripts\python -m pip install -e ".[dev]"
-```
-
-#### macOS
-
-Open **Terminal**:
-
-```bash
-git clone https://github.com/<your-org>/mbc-production-model-example.git
-cd mbc-production-model-example
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e .
-```
-
-To install developer tools:
-
-```bash
-.venv/bin/python -m pip install -e ".[dev]"
-```
-
-The normal install command, `pip install -e .`, installs the packages needed to
-run the model, including `numpy`, `pandas`, `openpyxl`, `matplotlib`, and
-`pywebview`. The `.[dev]` install adds tools for tests, linting, type checking,
-formatting, and documentation.
-
-### Setup Help With Codex
-
-If you have Codex installed, you can paste this into Codex from the project
-folder:
+Open Codex in VS Code and paste the following prompt exactly as written:
 
 ```text
-I am a beginner working on this class project. Please help me set it up on my computer. Check whether Python 3.11 or newer, Git, VS Code, Node.js/npm, and Codex CLI are installed. Then help me create a virtual environment, install the project with pip install -e ., optionally install developer tools with pip install -e ".[dev]", and run the desktop app with the virtual environment Python, such as .\.venv\Scripts\python -m mbc_model.ui on Windows or .venv/bin/python -m mbc_model.ui on macOS. Explain what each command does and stop before making file changes.
+Please install and verify the SOA Modeling Bootcamp example models project on this computer. Detect whether this is Windows or macOS and use the correct commands for that operating system.
+
+The GitHub repository is:
+https://github.com/Society-of-actuaries-research-institute/Example-Models-For-Modeling-Bootcamp
+
+Please complete the following setup:
+
+1. Check whether Python 3.11 or newer is installed. If it is missing, give me the installation link and pause until I confirm it is installed.
+2. Check whether Git is installed. If it is missing, give me the installation link and pause until I confirm it is installed.
+3. Clone the GitHub repository if it is not already on this computer.
+4. Open or confirm the repository folder in VS Code.
+5. Create a virtual environment named .venv inside the repository folder.
+6. Install the project with developer tools using pip install -e ".[dev]".
+7. Build the documentation with mkdocs build.
+8. Select the .venv Python interpreter in VS Code.
+9. Verify the VS Code Run and Debug configurations are available.
+10. Verify the VS Code Testing panel can discover the tests.
+11. Run black --check src tests.
+12. Run mypy src.
+13. Run pytest tests -m "not slow" --cov=mbc_model --cov-fail-under=90.
+14. Confirm that the R&D script can be run with the MBC R&D script debug configuration.
+15. Confirm that the production desktop UI can be launched with the MBC Desktop UI debug configuration.
+
+Please explain any required manual steps clearly and keep all commands scoped to the project folder and its .venv virtual environment.
 ```
+
+A virtual environment is a project-specific Python setup that keeps this
+project's packages separate from the rest of the computer. For this project, the
+virtual environment is the `.venv` folder inside the repository.
+
+To use it in VS Code:
+
+1. Press **Ctrl + Shift + P** on Windows or **Command + Shift + P** on macOS.
+2. Type `Python: Select Interpreter`.
+3. Select the interpreter inside `.venv`.
+
+This matters. A common beginner mistake is opening a separate Command Prompt or
+Terminal and running `python` without the virtual environment. If the virtual
+environment is active in a terminal, the prompt often starts with `(.venv)`.
+
+When in doubt, use the VS Code **Run and Debug** panel instead of typing a
+command manually.
 
 ## Example Use
 
@@ -225,53 +106,90 @@ I am a beginner working on this class project. Please help me set it up on my co
 This version is easiest to inspect because formulas, inputs, and outputs are all
 visible in Excel.
 
-### 2. Python R&D Script
+### 2. Set Up VS Code Debug
 
-Run the R&D model from the terminal.
+After Codex finishes installation:
 
-On Windows:
+1. Open VS Code.
+2. Click **File > Open Folder** and select the project folder.
+3. If VS Code asks whether you trust the folder, choose **Yes**.
+4. Press **Ctrl + Shift + P** on Windows or **Command + Shift + P** on macOS.
+5. Type `Python: Select Interpreter`.
+6. Select the interpreter inside `.venv`.
+7. Click the **Run and Debug** icon on the left side of VS Code. It looks like a
+   play button with a small bug.
+
+The project includes these debug configurations:
+
+| Debug configuration | What it does |
+|---------------------|--------------|
+| `MBC Desktop UI` | Opens the production desktop application. |
+| `MBC CLI - small table workbook` | Runs the production model from the small sample `.xlsx` input. |
+| `MBC R&D script` | Runs `RnD_model.py` using the small sample `.xlsx` input. |
+| `Current Python File` | Runs whichever Python file is currently open. |
+
+Press **F5** or the green play button to start the selected configuration.
+
+### 3. Python R&D Script
+
+Recommended beginner path:
+
+1. Open the **Run and Debug** panel in VS Code.
+2. Select **MBC R&D script**.
+3. Press **F5** or the green play button.
+
+The script reads `inputs/Input 10 pol 25 scen table.xlsx` and writes a
+timestamped output workbook to:
+
+```text
+outputs/rnd_results_YYYYMMDD_HHMMSS.xlsx
+```
+
+Optional command-line path:
+
+On Windows, use the VS Code integrated PowerShell terminal from the project
+folder:
 
 ```powershell
 .\.venv\Scripts\python RnD_model.py "inputs/Input 10 pol 25 scen table.xlsx"
 ```
 
-On macOS:
+On macOS, use the VS Code integrated Terminal from the project folder:
 
 ```bash
 .venv/bin/python RnD_model.py "inputs/Input 10 pol 25 scen table.xlsx"
 ```
 
-The script reads the input workbook and writes a timestamped output workbook to
-`outputs/rnd_results_YYYYMMDD_HHMMSS.xlsx`. It only prints a short start and
-finish message in the terminal.
+Do not open a random Command Prompt and type only `python RnD_model.py`. That
+often uses the wrong Python environment.
 
-### 3. Production Desktop Interface
+### 4. Production Desktop Interface
 
-Start the production desktop app:
+Recommended beginner path:
 
-On Windows:
+1. Open the **Run and Debug** panel in VS Code.
+2. Select **MBC Desktop UI**.
+3. Press **F5** or the green play button.
 
-```powershell
-.\.venv\Scripts\python -m mbc_model.ui
-```
-
-On macOS:
-
-```bash
-.venv/bin/python -m mbc_model.ui
-```
-
-Then:
+Then, in the desktop app:
 
 1. Click **Browse** and select `inputs/Input 10 pol 25 scen table.xlsx`.
 2. Review the **Inforce**, **Parameters**, and **Reporting** input tabs.
-3. Optionally edit inputs and save a new `.xlsx` copy.
+3. Optionally edit supported inputs and save a new `.xlsx` copy.
 4. Click **Run Model**.
 5. Review output tables and charts on the **Outputs** tab.
 6. Click **Open** to open the generated Excel output workbook.
 7. Use the **Run Log** tab to see previous actions and runs.
 
-Start with the 10-policy workbook before trying the larger examples.
+The project includes sample input workbooks in `inputs/`. Start with the
+10-policy workbook before trying the larger examples.
+
+Each production run creates a timestamped output workbook in `outputs/`, named
+similar to:
+
+```text
+outputs/results_YYYYMMDD_HHMMSS.xlsx
+```
 
 ### Optional Production Command Line
 
@@ -303,13 +221,7 @@ On macOS:
 .venv/bin/python -m mbc_model "inputs/Input 50k pol 10k scen seed.xlsx"
 ```
 
-Outputs are written to:
-
-```text
-outputs/results_YYYYMMDD_HHMMSS.xlsx
-```
-
-### Optional: Python API
+### Optional Python API
 
 ```python
 from pathlib import Path
@@ -320,74 +232,22 @@ output_path = run(Path("inputs/Input 10 pol 25 scen table.xlsx"))
 print(f"Results written to: {output_path}")
 ```
 
-## Debugging in VS Code
+## Development Commands
 
-1. Open VS Code.
-2. Click **File > Open Folder** and select this project folder.
-3. If VS Code asks whether you trust the folder, choose **Yes**.
-4. Press **Ctrl + Shift + P** on Windows or **Command + Shift + P** on macOS.
-5. Type `Python: Select Interpreter`.
-6. Select the interpreter inside `.venv`.
-7. Click the **Run and Debug** icon on the left side of VS Code. It looks like a
-   play button with a small bug.
-8. Choose one of the class debug configurations:
-
-| Debug configuration | What it does |
-|---------------------|--------------|
-| `MBC Desktop UI` | Opens the production desktop application. |
-| `MBC CLI - small table workbook` | Runs the production model from the small sample `.xlsx` input. |
-| `MBC R&D script` | Runs `RnD_model.py`. |
-| `Current Python File` | Runs whichever Python file is currently open. |
-
-Press **F5** or the green play button to start debugging. To set a breakpoint,
-click just to the left of a line number in a Python file, then run the debugger.
-
-## Production Input Workbooks
-
-The production model uses Excel `.xlsx` input workbooks with three sheets:
-
-| Sheet | Contents |
-|-------|----------|
-| `Inforce` | One row per policy: policy number, year of birth, gender, and annual benefit. |
-| `Parameters` | Valuation date, projection years, mortality rates, projection scale, and random numbers. |
-| `Reporting` | Which output sheets and graphs to create, plus selected policies/scenarios. |
-
-Sample inputs included in `inputs/`:
-
-| File | Policies | Scenarios | Random numbers |
-|------|----------|-----------|----------------|
-| `Input 10 pol 25 scen table.xlsx` | 10 | 25 | Workbook table |
-| `Input 10 pol 25 scen seed.xlsx` | 10 | 25 | Seeded RNG |
-| `Input 50k pol 10k scen seed.xlsx` | 50,000 | 10,000 | Seeded RNG |
-| `Input 100k pol 10k scen seed.xlsx` | 100,000 | 10,000 | Seeded RNG |
-
-## Production Output
-
-Each production run creates a timestamped Excel workbook in `outputs/`. Depending
-on the `Reporting` input sheet, the output can include:
-
-| Sheet | Contents |
-|-------|----------|
-| `Policy Results` | Year-by-year detail for one selected policy and scenario. |
-| `Scenario Results` | Cash flows by policy for one selected scenario. |
-| `Total Results` | Total cash flows by scenario. |
-| `Dashboard Results` | Present value summary statistics and optional charts. |
-
-## Development
-
-These are additional commands that can be used with the production software:
+These commands are mainly for development and troubleshooting after Codex has
+installed the project:
 
 | Command | What it does |
 |---------|--------------|
-| `pytest` | Runs the automated test suite. |
-| `pytest -m "not slow"` | Runs tests while skipping slow large-model tests. |
+| `pytest tests -m "not slow"` | Runs tests while skipping slow large-model tests. |
 | `mypy src` | Checks Python type hints in the production package. |
-| `pylint src` | Checks code quality and common Python mistakes. |
-| `black src tests` | Automatically formats production and test code. |
+| `pylint src --fail-under=9.0` | Checks code quality and common Python mistakes. |
+| `black --check src tests` | Checks whether production and test code are formatted. |
 | `mkdocs serve` | Starts a local documentation website for previewing `docs/`. |
+| `mkdocs build` | Builds the documentation site used by the desktop UI. |
 
-Install developer tools first with `pip install -e ".[dev]"` using the virtual
-environment commands shown above.
+Run these from the project folder with the `.venv` environment selected in VS
+Code.
 
 ## License
 
